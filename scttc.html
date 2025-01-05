@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Template Counter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 300px;
+            margin: 10px 0;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+        .column {
+            display: flex;
+            flex-direction: column;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        #stats {
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .stat-item {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        .stat-title {
+            font-weight: bold;
+            color: #333;
+        }
+        .stat-value {
+            float: right;
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <h1>Template Counter</h1>
+    <div class="container">
+        <div class="column">
+            <label for="input">Old Format:</label>
+            <textarea id="input" placeholder="Paste old format here..."></textarea>
+            <button onclick="analyze()">Analyze</button>
+        </div>
+        <div class="column">
+            <label>Statistics:</label>
+            <div id="stats">
+                Loading...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function countEntries(text) {
+            const blocks = text.split('{{Song covers').filter(block => block.trim());
+            const stats = {
+                totalBlocks: blocks.length,
+                totalEntries: 0,
+                withYoutube: 0,
+                withNiconico: 0,
+                withBoth: 0,
+                withNeither: 0,
+                multiSingers: 0,
+                withCD: 0,
+                withTM: 0,
+                withLiveVer: 0,
+                uniqueSingers: new Set(),
+                singerPairs: new Set()
+            };
+
+            blocks.forEach(block => {
+                for (let i = 1; i <= 5; i++) {
+                    // Check if entry exists by looking for singer
+                    const singerMatch = block.match(new RegExp(`singer${i} = ([^\\n|]+)`));
+                    if (!singerMatch) continue;
+
+                    stats.totalEntries++;
+                    
+                    // Count platform links
+                    const hasYT = block.match(new RegExp(`yt${i} = ([^\\n|]+)`))?.[ 1]?.trim();
+                    const hasNND = block.match(new RegExp(`nnd${i} = ([^\\n|]+)`))?.[ 1]?.trim();
+                    
+                    if (hasYT) stats.withYoutube++;
+                    if (hasNND) stats.withNiconico++;
+                    if (hasYT && hasNND) stats.withBoth++;
+                    if (!hasYT && !hasNND) stats.withNeither++;
+
+                    // Check for CD and TM entries
+                    if (block.match(new RegExp(`cd${i} = ([^\\n|]+)`))) stats.withCD++;
+                    if (block.match(new RegExp(`tm${i} = ([^\\n|]+)`))) stats.withTM++;
+
+                    // Analyze singers
+                    let singer = singerMatch[1].trim();
+                    
+                    // Check for live versions
+                    if (singer.toLowerCase().includes('live')) stats.withLiveVer++;
+
+                    // Process singers
+                    if (singer.includes(' x ')) {
+                        stats.multiSingers++;
+                        const singers = singer.split(' x ').map(s => 
+                            s.replace(/\[\[|\]\]|<br>.*$/g, '').trim()
+                        );
+                        singers.forEach(s => stats.uniqueSingers.add(s));
+                        stats.singerPairs.add(singers.join(' x '));
+                    } else {
+                        const cleanSinger = singer.replace(/\[\[|\]\]|<br>.*$/g, '').trim();
+                        stats.uniqueSingers.add(cleanSinger);
+                    }
+                }
+            });
+
+            return stats;
+        }
+
+        function analyze() {
+            const input = document.getElementById('input');
+            const statsDiv = document.getElementById('stats');
+            
+            try {
+                const stats = countEntries(input.value);
+                
+                statsDiv.innerHTML = `
+                    <div class="stat-item">
+                        <span class="stat-title">Total Template Blocks:</span>
+                        <span class="stat-value">${stats.totalBlocks}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-title">Total Entries:</span>
+                        <span class="stat-value">${stats.totalEntries}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-title">With YouTube:</span>
+                        <span class="stat-value">${stats.withYoutube}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-title">With Niconico:</span>
+                        <span class="stat-value">${stats.withNiconico}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-title">With Both Platforms:</span>
+                        <span class="stat-value">${stats.withBoth}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-title">No Platform Links:</span>
+                        <span class="stat-value">${stats.withNeither}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-title">Multi-Singer Entries:</span>
+                        <span class="stat-value">${stats.multiSingers}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-title">CD Entries:</span>
+                        <span class="stat-value">${stats.withCD}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-title">TM Entries:</span>
+                        <span class="stat-value">${stats.withTM}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-title">Live Versions:</span>
+                        <span class="stat-value">${stats.withLiveVer}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-title">Unique Singers:</span>
+                        <span class="stat-value">${stats.uniqueSingers.size}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-title">Unique Singer Pairs:</span>
+                        <span class="stat-value">${stats.singerPairs.size}</span>
+                    </div>
+                `;
+            } catch (error) {
+                statsDiv.innerHTML = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
