@@ -1,1 +1,77 @@
-utaitewiki@fandom
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Utaite Wiki Fandom Utilities</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-purple-50 to-indigo-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-indigo-900 mb-4">Utaite Wiki Fandom Utilities</h1>
+            <p class="text-lg text-gray-600">A collection of tools to help manage and improve the Utaite Wiki</p>
+        </header>
+
+        <!-- Tools Grid -->
+        <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            <!-- CSTU Tool Card -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden transform transition duration-300 hover:scale-105">
+                <div class="bg-indigo-600 p-4">
+                    <h2 class="text-xl font-semibold text-white">CSTU</h2>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-gray-800 font-medium mb-2">Convert Song Template Utility</h3>
+                    <p class="text-gray-600 mb-4">
+                        Converts old song page implementations to NotableUtattemita template transclusion format.
+                    </p>
+                    <div class="space-y-2">
+                        <div class="flex items-center text-gray-700">
+                            <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                            <span>Automatic template conversion</span>
+                        </div>
+                        <div class="flex items-center text-gray-700">
+                            <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                            <span>Preserves page content</span>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <a href="./cstu.html" class="inline-block bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition duration-300">
+                            Access Tool
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coming Soon Card -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden opacity-75">
+                <div class="bg-gray-500 p-4">
+                    <h2 class="text-xl font-semibold text-white">Coming Soon</h2>
+                </div>
+                <div class="p-6">
+                    <div class="animate-pulse">
+                        <div class="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+                        <div class="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+                        <div class="h-4 bg-gray-200 rounded w-5/6"></div>
+                    </div>
+                    <div class="mt-6">
+                        <button disabled class="inline-block bg-gray-400 text-white px-6 py-2 rounded-lg cursor-not-allowed">
+                            Coming Soon
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center mt-12 text-gray-600">
+            <p>More utilities will be added soon to help manage and improve the Utaite Wiki Fandom.</p>
+        </footer>
+    </div>
+</body>
+</html>
