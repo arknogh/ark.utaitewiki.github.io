@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Template Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 300px;
+            margin: 10px 0;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .column {
+            display: flex;
+            flex-direction: column;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Template Converter</h1>
+    <div class="container">
+        <div class="column">
+            <label for="input">Old Format:</label>
+            <textarea id="input" placeholder="Paste old format here..."></textarea>
+        </div>
+        <div class="column">
+            <label for="output">New Format:</label>
+            <textarea id="output" readonly placeholder="Converted template will appear here..."></textarea>
+        </div>
+    </div>
+    <div style="text-align: center;">
+        <button onclick="convert()">Convert</button>
+    </div>
+
+    <script>
+        function parseOldFormat(text) {
+            const blocks = text.split('{{Song covers').filter(block => block.trim());
+            const entries = [];
+            
+            blocks.forEach(block => {
+                for (let i = 1; i <= 5; i++) {
+                    const entry = {};
+                    
+                    // Extract singer
+                    const singerMatch = block.match(new RegExp(`singer${i} = ([^\\n|]+)`));
+                    if (!singerMatch) continue;
+                    
+                    let singer = singerMatch[1].trim();
+                    let description = '';
+                    
+                    // Handle <br> content
+                    if (singer.includes('<br>')) {
+                        const [baseSinger, brContent] = singer.split('<br>');
+                        singer = baseSinger.trim();
+                        description = brContent.trim();
+                    }
+                    
+                    // Handle parenthetical content
+                    if (singer.includes('(')) {
+                        const [baseSinger, parentContent] = singer.split('(');
+                        singer = baseSinger.trim();
+                        description = (description + ' ' + parentContent.replace(')', '')).trim();
+                    }
+                    
+                    // Handle CD and TM cases
+                    const cdMatch = block.match(new RegExp(`cd${i} = ([^\\n|]+)`));
+                    const tmMatch = block.match(new RegExp(`tm${i} = ([^\\n|]+)`));
+                    
+                    if (cdMatch) {
+                        const [_, albumName] = cdMatch[1].split('#');
+                        singer = singer + '#' + albumName.trim();
+                    }
+                    
+                    if (tmMatch) {
+                        description = (description + ' (TmBox: ' + tmMatch[1].trim() + ')').trim();
+                    }
+                    
+                    // Check if it's a multi-singer entry
+                    const hasMultipleSingers = singer.includes(' x ');
+                    if (hasMultipleSingers) {
+                        entry.singernolink = 'y';
+                    }
+                    
+                    // Remove [[ ]] if not multi-singer
+                    if (!hasMultipleSingers) {
+                        singer = singer.replace(/\[\[|\]\]/g, '');
+                    }
+                    
+                    entry.singer = singer;
+                    if (description) entry.description = description;
+                    
+                    // Extract YT and NND
+                    const ytMatch = block.match(new RegExp(`yt${i} = ([^\\n|]*)`));
+                    const nndMatch = block.match(new RegExp(`nnd${i} = ([^\\n|]*)`));
+                    
+                    if (ytMatch && ytMatch[1].trim()) entry.YT = ytMatch[1].trim();
+                    if (nndMatch && nndMatch[1].trim()) entry.NND = nndMatch[1].trim();
+                    
+                    // Add placeholder image
+                    entry.image = 'YoshiwaraLament.png';
+                    
+                    if (Object.keys(entry).length > 1) {  // More than just image
+                        entries.push(entry);
+                    }
+                }
+            });
+            
+            return entries;
+        }
+
+        function formatNewTemplate(entries) {
+            let output = '{{NOUT\n|entries=';
+            entries.forEach(entry => {
+                output += '{{NUTE\n';
+                Object.entries(entry).forEach(([key, value]) => {
+                    output += `|${key}=${value}\n`;
+                });
+                output += '}}';
+            });
+            output += '}}';
+            return output;
+        }
+
+        function convert() {
+            const input = document.getElementById('input');
+            const output = document.getElementById('output');
+            
+            try {
+                const entries = parseOldFormat(input.value);
+                output.value = formatNewTemplate(entries);
+            } catch (error) {
+                output.value = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
