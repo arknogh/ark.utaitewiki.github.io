@@ -68,6 +68,23 @@
     </div>
 
     <script>
+        function formatExternalLink(type, id) {
+            switch(type) {
+                case 'sc':
+                    return `[https://w.soundcloud.com/player/?url=https://api.soundcloud.com/tracks/${id} Soundcloud]`;
+                case 'bb':
+                    return `[https://www.bilibili.com/video/${id}/ Bilibili]`;
+                case 'koebu':
+                    return `[http://koebu.com/koe/${id} koebu]`;
+                case 'tm':
+                    return `[http://tmbox.net/pl/${id} TmBox]`;
+                case 'box':
+                    return `[https://www.box.com/s/${id} box]`;
+                default:
+                    return '';
+            }
+        }
+
         function parseOldFormat(text) {
             const blocks = text.split('{{Song covers').filter(block => block.trim());
             const entries = [];
@@ -97,17 +114,39 @@
                         description = (description + ' ' + parentContent.replace(')', '')).trim();
                     }
                     
-                    // Handle CD and TM cases
+                    // Handle CD and various platform links
                     const cdMatch = block.match(new RegExp(`cd${i} = ([^\\n|]+)`));
                     const tmMatch = block.match(new RegExp(`tm${i} = ([^\\n|]+)`));
+                    const scMatch = block.match(new RegExp(`sc${i} = ([^\\n|]+)`));
+                    const bbMatch = block.match(new RegExp(`bb${i} = ([^\\n|]+)`));
+                    const koebuMatch = block.match(new RegExp(`koebu${i} = ([^\\n|]+)`));
+                    const boxMatch = block.match(new RegExp(`box${i} = ([^\\n|]+)`));
                     
                     if (cdMatch) {
                         const [_, albumName] = cdMatch[1].split('#');
                         singer = singer + '#' + albumName.trim();
                     }
                     
-                    if (tmMatch) {
-                        description = (description + ' (TmBox: ' + tmMatch[1].trim() + ')').trim();
+                    // Add platform links to description
+                    const links = [];
+                    if (scMatch && scMatch[1].trim()) {
+                        links.push(formatExternalLink('sc', scMatch[1].trim()));
+                    }
+                    if (bbMatch && bbMatch[1].trim()) {
+                        links.push(formatExternalLink('bb', bbMatch[1].trim()));
+                    }
+                    if (koebuMatch && koebuMatch[1].trim()) {
+                        links.push(formatExternalLink('koebu', koebuMatch[1].trim()));
+                    }
+                    if (tmMatch && tmMatch[1].trim()) {
+                        links.push(formatExternalLink('tm', tmMatch[1].trim()));
+                    }
+                    if (boxMatch && boxMatch[1].trim()) {
+                        links.push(formatExternalLink('box', boxMatch[1].trim()));
+                    }
+                    
+                    if (links.length > 0) {
+                        description = description ? `${description} ${links.join(' ')}` : links.join(' ');
                     }
                     
                     // Check if it's a multi-singer entry
