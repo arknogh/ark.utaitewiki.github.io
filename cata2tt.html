@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Album Info Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-5xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">Album Info Converter</h1>
+            <p class="text-lg text-gray-600">Convert your album information to AlbumType2 template format</p>
+        </div>
+
+        <!-- Main Container -->
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <!-- Input Section -->
+            <div class="p-6 border-b border-gray-200">
+                <label for="albumInfoInput" class="block text-sm font-medium text-gray-700 mb-2">
+                    Input Raw Album Info
+                </label>
+                <div class="relative">
+                    <textarea 
+                        id="albumInfoInput" 
+                        class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 resize-y font-mono text-sm h-96"
+                        placeholder="Paste your raw album information here...&#10;Example:&#10;albumtitle: My Album&#10;albumartist: Artist Name&#10;image: album.jpg&#10;..."
+                    ></textarea>
+                </div>
+            </div>
+
+            <!-- Controls Section -->
+            <div class="bg-gray-50 px-6 py-4 flex items-center justify-between">
+                <div class="flex gap-4">
+                    <button 
+                        id="clearBtn"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    >
+                        Clear
+                    </button>
+                    <button 
+                        id="sampleBtn"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    >
+                        Load Sample
+                    </button>
+                </div>
+                <button 
+                    id="convertBtn"
+                    class="inline-flex items-center px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                    Convert →
+                </button>
+            </div>
+
+            <!-- Output Section -->
+            <div class="p-6 bg-gray-50">
+                <div class="flex items-center justify-between mb-2">
+                    <label for="albumInfoOutput" class="block text-sm font-medium text-gray-700">
+                        Output AlbumType2 Template
+                    </label>
+                    <button 
+                        id="copyBtn"
+                        class="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md shadow-sm text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    >
+                        Copy to Clipboard
+                    </button>
+                </div>
+                <div class="relative">
+                    <textarea 
+                        id="albumInfoOutput" 
+                        class="block w-full rounded-lg border-gray-300 shadow-sm bg-white font-mono text-sm h-96"
+                        readonly
+                    ></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-8 text-center text-sm text-gray-500">
+            <p>Made for wiki template conversion</p>
+        </div>
+    </div>
+
+    <script>
+        // Helper function to convert {{l|...}} to {{LType2|...}}
+        const convertLToLType2 = (text) => {
+            return text?.replace(/\{\{l\|([^}]+)\}\}/g, (_, content) => `{{LType2|${content}}}`);
+        };
+
+        // Sample data for demonstration
+        const sampleData = `albumtitle: Amazing Album
+albumartist: Wonderful Artist
+image: album_cover.jpg
+datereleased: 2024-01-15
+crossfadeyt: yt12345
+streams: spotify|ab12345
+shops: amazon|12345
+
+Track 1:
+title: First Song
+info: featuring Another Artist
+lyricist: John Doe
+composer: Jane Smith
+arranger: Bob Wilson
+
+Track 2:
+title: Second Song
+info: {{l|special version}}
+lyricist: John Doe
+composer: Jane Smith`;
+
+        // Process the conversion
+        const processConversion = () => {
+            const input = document.getElementById('albumInfoInput').value;
+            const output = document.getElementById('albumInfoOutput');
+            let templateText = '{{AlbumType2\n';
+
+            // Basic album info parsing with albumartist included
+            const basicInfo = {
+                albumtitle: input.match(/albumtitle:\s*(.+)/),
+                albumartist: input.match(/albumartist:\s*(.+)/),
+                image: input.match(/image:\s*(.+)/),
+                datereleased: input.match(/datereleased:\s*(.+)/),
+                crossfadeyt: input.match(/crossfadeyt:\s*(.+)/),
+                streams: input.match(/streams:\s*(.+)/),
+                shops: input.match(/shops:\s*(.+)/)
+            };
+
+            // Add basic info to template and convert l to LType2
+            for (const [key, value] of Object.entries(basicInfo)) {
+                if (value) {
+                    const processedValue = convertLToLType2(value[1].trim());
+                    templateText += `|${key} = ${processedValue}\n`;
+                }
+            }
+
+            // Add Spotify album ID if present in streams
+            if (basicInfo.streams?.[1].includes('spotify')) {
+                const spotifyId = basicInfo.streams[1].match(/spotify\|([\w\d]+)/);
+                if (spotifyId) {
+                    templateText += `|spotifyalbumid = ${spotifyId[1]}\n`;
+                }
+            }
+
+            // Process tracks
+            templateText += '\n|track=\n{{Scrollbox|height=600|height-unit=px|\n';
+
+            // Match all track entries using named capture groups
+            const trackPattern = /Track\s+(?<number>\d+):\s*\ntitle:\s*(?<title>[^\n]+)(?:\ninfo:\s*(?<info>[^\n]+))?(?:\nlyricist:\s*(?<lyricist>[^\n]+))?(?:\ncomposer:\s*(?<composer>[^\n]+))?(?:\narranger:\s*(?<arranger>[^\n]+))?/g;
+
+            // Use matchAll for better iteration over matches
+            for (const match of input.matchAll(trackPattern)) {
+                const {
+                    number,
+                    title,
+                    info = '',
+                    lyricist = '',
+                    composer = '',
+                    arranger = ''
+                } = match.groups;
+
+                // Format track entry and convert l to LType2
+                templateText += `{{Track|${number}` +
+                              `|title=${title.trim()}` +
+                              `|additionalshortinfo=${convertLToLType2(info.trim())}`;
+
+                if (lyricist) templateText += `|lyricist=${lyricist.trim()}`;
+                if (composer) templateText += `|composer=${composer.trim()}`;
+                if (arranger) templateText += `|arranger=${arranger.trim()}`;
+
+                templateText += '|collapsible=y|collapsed=y}}\n';
+            }
+
+            templateText += '}}\n}}';
+            output.value = templateText;
+        };
+
+        // Initialize event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            const convertBtn = document.getElementById('convertBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const sampleBtn = document.getElementById('sampleBtn');
+            const copyBtn = document.getElementById('copyBtn');
+            const input = document.getElementById('albumInfoInput');
+            const output = document.getElementById('albumInfoOutput');
+
+            convertBtn.addEventListener('click', processConversion);
+            
+            clearBtn.addEventListener('click', () => {
+                input.value = '';
+                output.value = '';
+            });
+
+            sampleBtn.addEventListener('click', () => {
+                input.value = sampleData;
+            });
+
+            copyBtn.addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(output.value);
+                    const originalText = copyBtn.textContent;
+                    copyBtn.textContent = 'Copied!';
+                    setTimeout(() => {
+                        copyBtn.textContent = originalText;
+                    }, 2000);
+                } catch (err) {
+                    console.error('Failed to copy text:', err);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
