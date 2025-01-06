@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Album Template Parser</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen p-8">
+    <div id="app" class="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-6">
+        <h1 class="text-2xl font-bold mb-6 text-gray-800">Album Template Parser</h1>
+        
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+            <p class="text-yellow-800">
+                ⚠️ Before parsing, please ensure your album template code is cleaned for best results.
+            </p>
+        </div>
+
+        <div class="mb-6">
+            <label for="template-input" class="block text-sm font-medium text-gray-700 mb-2">
+                Paste Album Template:
+            </label>
+            <textarea 
+                id="template-input"
+                class="w-full h-40 p-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+            ></textarea>
+            <button 
+                id="parse-button"
+                class="mt-3 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+                Parse Template
+            </button>
+        </div>
+
+        <div id="basic-fields-container" class="mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">Basic Information</h2>
+            <div id="basic-fields" class="space-y-3"></div>
+        </div>
+
+        <div id="tracks-container" class="mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">Track Information</h2>
+            <div id="tracks" class="space-y-6"></div>
+        </div>
+
+        <div class="flex space-x-4">
+            <button id="copy-basic-button" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                Copy Basic Info
+            </button>
+            <button id="copy-tracks-button" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                Copy Track Info
+            </button>
+            <button id="copy-all-button" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                Copy All
+            </button>
+        </div>
+    </div>
+
+    <script>
+        class AlbumTemplateParser {
+            constructor() {
+                this.fields = [
+                    'albumtitle', 'image', 'imagealt', 'image3', 'image4', 'image5',
+                    'albumartist', 'datereleased', 'crossfadeyt', 'crossfadennd',
+                    'streams', 'shops', 'downloads'
+                ];
+
+                this.trackFields = ['title', 'info', 'utaite', 'lyricist', 'composer', 'arranger'];
+                
+                this.init();
+            }
+
+            init() {
+                this.createBasicFields();
+                this.createTrackFields();
+                this.bindEvents();
+            }
+
+            createBasicFields() {
+                const container = document.getElementById('basic-fields');
+                
+                this.fields.forEach(field => {
+                    const fieldGroup = document.createElement('div');
+                    fieldGroup.className = 'flex items-center';
+                    
+                    fieldGroup.innerHTML = `
+                        <label class="w-40 text-sm font-medium text-gray-700">${field}:</label>
+                        <input 
+                            type="text" 
+                            id="field-${field}"
+                            class="flex-1 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                        >
+                    `;
+                    
+                    container.appendChild(fieldGroup);
+                });
+            }
+
+            createTrackFields() {
+                const container = document.getElementById('tracks');
+                
+                for (let i = 1; i <= 50; i++) {
+                    const trackSection = document.createElement('div');
+                    trackSection.id = `track-${i}`;
+                    trackSection.className = 'hidden border border-gray-200 rounded-lg p-4';
+                    
+                    trackSection.innerHTML = `
+                        <h3 class="text-lg font-medium mb-3">Track ${i}</h3>
+                        <div class="space-y-3">
+                            ${this.trackFields.map(field => `
+                                <div class="flex items-center">
+                                    <label class="w-40 text-sm font-medium text-gray-700">${field}:</label>
+                                    <input 
+                                        type="text" 
+                                        id="track-${i}-${field}"
+                                        class="flex-1 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                    >
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    
+                    container.appendChild(trackSection);
+                }
+            }
+
+            parseTemplate(templateText) {
+                const values = {
+                    basic: {},
+                    tracks: []
+                };
+
+                const lines = templateText.split('\n');
+                let currentField = '';
+                let currentValue = '';
+                let bracketCount = 0;
+                let inField = false;
+
+                for (const line of lines) {
+                    const trimmedLine = line.trim();
+                    
+                    if (!trimmedLine || trimmedLine === '{{Album' || trimmedLine === '}}') {
+                        continue;
+                    }
+
+                    if (trimmedLine.startsWith('|')) {
+                        if (currentField && currentValue) {
+                            this.processField(values, currentField, currentValue.trim());
+                        }
+                        
+                        const parts = trimmedLine.substring(1).split('=');
+                        currentField = parts[0].trim();
+                        currentValue = parts.slice(1).join('=').trim();
+                        
+                        bracketCount = (currentValue.match(/{{/g) || []).length - 
+                                     (currentValue.match(/}}/g) || []).length;
+                        
+                        inField = true;
+                    } else if (inField) {
+                        bracketCount += (trimmedLine.match(/{{/g) || []).length - 
+                                      (trimmedLine.match(/}}/g) || []).length;
+                        currentValue += '\n' + trimmedLine;
+                    }
+
+                    if (bracketCount === 0 && inField) {
+                        this.processField(values, currentField, currentValue.trim());
+                        inField = false;
+                        currentField = '';
+                        currentValue = '';
+                    }
+                }
+
+                return values;
+            }
+
+            processField(values, field, value) {
+                const trackMatch = field.match(/^track(\d+)(title|info|lyricist|composer|arranger|utaite)$/);
+                if (trackMatch) {
+                    const trackNum = parseInt(trackMatch[1]) - 1;
+                    const fieldName = trackMatch[2];
+                    
+                    if (!values.tracks[trackNum]) {
+                        values.tracks[trackNum] = {};
+                    }
+                    values.tracks[trackNum][fieldName] = value;
+                } else if (this.fields.includes(field)) {
+                    values.basic[field] = value;
+                }
+            }
+
+            bindEvents() {
+                document.getElementById('parse-button').addEventListener('click', () => {
+                    const templateText = document.getElementById('template-input').value;
+                    const values = this.parseTemplate(templateText);
+                    
+                    this.fillBasicFields(values.basic);
+                    this.fillTrackFields(values.tracks);
+                });
+
+                document.getElementById('copy-basic-button').addEventListener('click', () => 
+                    this.copyBasicInfo());
+                document.getElementById('copy-tracks-button').addEventListener('click', () => 
+                    this.copyTrackInfo());
+                document.getElementById('copy-all-button').addEventListener('click', () => 
+                    this.copyAllInfo());
+            }
+
+            fillBasicFields(basicInfo) {
+                for (const [field, value] of Object.entries(basicInfo)) {
+                    const input = document.getElementById(`field-${field}`);
+                    if (input) input.value = value;
+                }
+            }
+
+            fillTrackFields(tracks) {
+                tracks.forEach((track, index) => {
+                    const trackNum = index + 1;
+                    const section = document.getElementById(`track-${trackNum}`);
+                    
+                    if (track && Object.keys(track).length > 0) {
+                        this.trackFields.forEach(field => {
+                            const input = document.getElementById(`track-${trackNum}-${field}`);
+                            if (input) input.value = track[field] || '';
+                        });
+                        section.classList.remove('hidden');
+                    } else {
+                        section.classList.add('hidden');
+                    }
+                });
+            }
+
+            async copyToClipboard(text) {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    this.showNotification('Copied to clipboard!');
+                } catch (err) {
+                    this.showNotification('Failed to copy to clipboard', true);
+                }
+            }
+
+            showNotification(message, isError = false) {
+                const notification = document.createElement('div');
+                notification.className = `fixed top-4 right-4 p-4 rounded-md ${
+                    isError ? 'bg-red-500' : 'bg-green-500'
+                } text-white`;
+                notification.textContent = message;
+                
+                document.body.appendChild(notification);
+                setTimeout(() => notification.remove(), 3000);
+            }
+
+            getBasicInfo() {
+                let text = '';
+                for (const field of this.fields) {
+                    const value = document.getElementById(`field-${field}`).value;
+                    if (value) text += `${field}: ${value}\n`;
+                }
+                return text;
+            }
+
+            getTrackInfo() {
+                let text = '';
+                for (let i = 1; i <= 50; i++) {
+                    const section = document.getElementById(`track-${i}`);
+                    if (!section.classList.contains('hidden')) {
+                        text += `\nTrack ${i}:\n`;
+                        for (const field of this.trackFields) {
+                            const value = document.getElementById(`track-${i}-${field}`).value;
+                            if (value) text += `${field}: ${value}\n`;
+                        }
+                    }
+                }
+                return text;
+            }
+
+            copyBasicInfo() {
+                this.copyToClipboard(this.getBasicInfo());
+            }
+
+            copyTrackInfo() {
+                this.copyToClipboard(this.getTrackInfo());
+            }
+
+            copyAllInfo() {
+                this.copyToClipboard(this.getBasicInfo() + '\n' + this.getTrackInfo());
+            }
+        }
+
+        // Initialize when document is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            new AlbumTemplateParser();
+        });
+    </script>
+</body>
+</html>
