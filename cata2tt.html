@@ -90,26 +90,34 @@
         };
 
         // Sample data for demonstration
-        const sampleData = `albumtitle: Amazing Album
-albumartist: Wonderful Artist
-image: album_cover.jpg
-datereleased: 2024-01-15
-crossfadeyt: yt12345
-streams: spotify|ab12345
-shops: amazon|12345
+        const sampleData = `albumtitle: [https://amatsuki.jp/musics/5469 Mr.Fake/Tsunageru]
+image: Mr.Fake_normal.png
+albumartist: 茶々ごま
+datereleased: July 19, 2017
+streams: {{l|spotify|1uxx9ZuhRChdnN3LlMTwuS}}
+shops: {{l|amazon|B072B9R6CJ}}
+
 
 Track 1:
-title: First Song
-info: featuring Another Artist
-lyricist: John Doe
-composer: Jane Smith
-arranger: Bob Wilson
+title: Mr.Fake
+info: Theme Song of TV Drama "Tomodachi Game" {{yt|QemU5T44I_U}}
+lyricist: Shou Watanabe, Amatsuki
+composer: Shou Watanabe
+arranger: Masato Nakayama
 
 Track 2:
-title: Second Song
-info: {{l|special version}}
-lyricist: John Doe
-composer: Jane Smith`;
+title: Tsunageru {{yt|LgDHZoczBGo}}
+info: The Theme Song for Docomo Tohoku Reconstruction and Revitalization 'Smile Bridge Rainbow Project'
+lyricist: Kei Hayashi
+composer: Kei Hayashi
+arranger: {{VW|Tanahashi UNA Nobuhito}}
+
+Track 3:
+title: Mirai no Seimei {{yt|Mwt7dcPgD4s}}
+info: The Theme Song for the Stage Play '[http://mottorekishi.com/yoshiteru/ Swordmaster General Yoshiteru ~To Those Who Inherit the Stars~]'
+lyricist: [[Amatsuki]], Reina Hasegawa
+composer: KoTa, Yuichi Harada
+`;
 
         // Process the conversion
         const processConversion = () => {
@@ -145,7 +153,7 @@ composer: Jane Smith`;
             }
 
             // Process tracks
-            templateText += '\n|track=\n{{Scrollbox|height=600|height-unit=px|\n';
+            templateText += '\n|track=\n';
 
             // Match all track entries using named capture groups
             const trackPattern = /Track\s+(?<number>\d+):\s*\ntitle:\s*(?<title>[^\n]+)(?:\ninfo:\s*(?<info>[^\n]+))?(?:\nlyricist:\s*(?<lyricist>[^\n]+))?(?:\ncomposer:\s*(?<composer>[^\n]+))?(?:\narranger:\s*(?<arranger>[^\n]+))?/g;
@@ -170,10 +178,10 @@ composer: Jane Smith`;
                 if (composer) templateText += `|composer=${composer.trim()}`;
                 if (arranger) templateText += `|arranger=${arranger.trim()}`;
 
-                templateText += '|collapsible=y|collapsed=y}}\n';
+                templateText += '}}\n';
             }
 
-            templateText += '}}\n}}';
+            templateText += '}}';
             output.value = templateText;
         };
 
