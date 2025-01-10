@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON to FUCE Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-2xl font-bold mb-4">JSON to FUCE Converter</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-4">
+                <label class="block">
+                    <span class="text-gray-700">Input JSON:</span>
+                    <textarea id="jsonInput" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm h-96 p-2" placeholder="Paste your JSON here..."></textarea>
+                </label>
+                <button id="convertBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Convert</button>
+            </div>
+            
+            <div class="space-y-4">
+                <label class="block">
+                    <span class="text-gray-700">FUCE Output:</span>
+                    <textarea id="fuceOutput" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm h-96 p-2" readonly></textarea>
+                </label>
+                <button id="copyBtn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Copy to Clipboard</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function convertToFUCE(jsonData) {
+            return jsonData.map(entry => {
+                const rank = entry.ranking;
+                const songTitle = entry.song_title;
+                const videoId = entry.video_id;
+                
+                // Handle the utaite part based on whether ufu exists
+                let utaitePart;
+                if (entry.ufu && entry.ufu.trim() !== '' && entry.ufu !== '＿＿') {
+                    utaitePart = `[[${entry.ufu}|${entry.utaite}]]`;
+                } else {
+                    utaitePart = `[[${entry.utaite}]]`;
+                }
+                
+                return `{{FUCE|${rank}|${songTitle}|${utaitePart} |${videoId}}}`;
+            }).join('\n');
+        }
+
+        document.getElementById('convertBtn').addEventListener('click', () => {
+            try {
+                const jsonInput = document.getElementById('jsonInput').value;
+                const jsonData = JSON.parse(jsonInput);
+                const fuceOutput = convertToFUCE(jsonData);
+                document.getElementById('fuceOutput').value = fuceOutput;
+            } catch (error) {
+                alert('Error processing JSON: ' + error.message);
+            }
+        });
+
+        document.getElementById('copyBtn').addEventListener('click', () => {
+            const outputText = document.getElementById('fuceOutput');
+            outputText.select();
+            document.execCommand('copy');
+            alert('Copied to clipboard!');
+        });
+    </script>
+</body>
+</html>
