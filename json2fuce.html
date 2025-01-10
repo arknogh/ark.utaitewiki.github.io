@@ -10,6 +10,23 @@
     <div class="max-w-4xl mx-auto">
         <h1 class="text-2xl font-bold mb-4">JSON to FUCE Converter</h1>
         
+        <!-- Language Selection -->
+        <div class="mb-4">
+            <p class="text-gray-700 mb-2">Select Language Format:</p>
+            <div class="flex space-x-4">
+                <label class="inline-flex items-center">
+                    <input type="radio" name="language" value="japanese" checked
+                           class="form-radio text-blue-500">
+                    <span class="ml-2">Japanese (両方使用)</span>
+                </label>
+                <label class="inline-flex items-center">
+                    <input type="radio" name="language" value="english"
+                           class="form-radio text-blue-500">
+                    <span class="ml-2">English (UFU only)</span>
+                </label>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-4">
                 <label class="block">
@@ -27,21 +44,52 @@
                 <button id="copyBtn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Copy to Clipboard</button>
             </div>
         </div>
+
+        <!-- Toast Container -->
+        <div id="toastContainer" class="fixed bottom-4 right-4 z-50"></div>
     </div>
 
     <script>
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `mb-2 p-4 rounded-lg shadow-lg transform transition-all duration-500 translate-y-0 opacity-100 ${
+                type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            } text-white`;
+            toast.textContent = message;
+
+            const container = document.getElementById('toastContainer');
+            container.appendChild(toast);
+
+            // Fade out and remove after 3 seconds
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        }
+
         function convertToFUCE(jsonData) {
+            const language = document.querySelector('input[name="language"]:checked').value;
+            
             return jsonData.map(entry => {
                 const rank = entry.ranking;
                 const songTitle = entry.song_title;
                 const videoId = entry.video_id;
                 
-                // Handle the utaite part based on whether ufu exists
                 let utaitePart;
-                if (entry.ufu && entry.ufu.trim() !== '' && entry.ufu !== '＿＿') {
-                    utaitePart = `[[${entry.ufu}|${entry.utaite}]]`;
+                if (language === 'japanese') {
+                    // For Japanese: Use both ufu and utaite if ufu exists
+                    if (entry.ufu && entry.ufu.trim() !== '' && entry.ufu !== '＿＿') {
+                        utaitePart = `[[${entry.ufu}|${entry.utaite}]]`;
+                    } else {
+                        utaitePart = `[[${entry.utaite}]]`;
+                    }
                 } else {
-                    utaitePart = `[[${entry.utaite}]]`;
+                    // For English: Use only ufu if it exists, otherwise use utaite
+                    if (entry.ufu && entry.ufu.trim() !== '' && entry.ufu !== '＿＿') {
+                        utaitePart = `[[${entry.ufu}]]`;
+                    } else {
+                        utaitePart = `[[${entry.utaite}]]`;
+                    }
                 }
                 
                 return `{{FUCE|${rank}|${songTitle}|${utaitePart} |${videoId}}}`;
@@ -54,16 +102,20 @@
                 const jsonData = JSON.parse(jsonInput);
                 const fuceOutput = convertToFUCE(jsonData);
                 document.getElementById('fuceOutput').value = fuceOutput;
+                showToast('Successfully converted to FUCE format!');
             } catch (error) {
-                alert('Error processing JSON: ' + error.message);
+                showToast('Error processing JSON: ' + error.message, 'error');
             }
         });
 
-        document.getElementById('copyBtn').addEventListener('click', () => {
+        document.getElementById('copyBtn').addEventListener('click', async () => {
             const outputText = document.getElementById('fuceOutput');
-            outputText.select();
-            document.execCommand('copy');
-            alert('Copied to clipboard!');
+            try {
+                await navigator.clipboard.writeText(outputText.value);
+                showToast('Copied to clipboard!');
+            } catch (err) {
+                showToast('Failed to copy to clipboard', 'error');
+            }
         });
     </script>
 </body>
