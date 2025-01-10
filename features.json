@@ -1,0 +1,55 @@
+{
+  "title": "Utaite Wiki Fandom Utilities",
+  "description": "A collection of tools to help manage and improve the Utaite Wiki",
+  "features": [
+    {
+      "id": "scttc",
+      "title": "Song Covers Template Counter",
+      "shortTitle": "Song Covers Template Counter",
+      "description": "Analyzes and counts old song template transclusions across the wiki, providing valuable statistics and insights.",
+      "status": "active",
+      "backgroundColor": "bg-indigo-600",
+      "url": "./scttc.html",
+      "bullets": [
+        "Total template count",
+        "Detailed statistics"
+      ]
+    },
+    {
+      "id": "cstu",
+      "title": "Convert Song Template Utility",
+      "shortTitle": "Convert Song Template Utility",
+      "description": "Converts old <a href=\"https://utaite.fandom.com/wiki/Template:Song covers\" target=\"_blank\">Song covers</a> template transclusion to <a href=\"https://utaite.fandom.com/wiki/Template:NotableUtattemita/Table\" target=\"_blank\">NotableUtattemita</a> template transclusion format.",
+      "status": "active",
+      "backgroundColor": "bg-indigo-600",
+      "url": "./cstu.html",
+      "bullets": [
+        "Automatic template conversion",
+        "Preserves page content"
+      ]
+    },
+    {
+      "id": "json2fuce",
+      "title": "JSON to FUCE Converter",
+      "shortTitle": "JSON to FUCE Converter",
+      "description": "Converts JSON data into FUCE template transclusion format for easy integration with wiki pages.",
+      "status": "active",
+      "backgroundColor": "bg-indigo-600",
+      "url": "./json2fuce.html",
+      "bullets": [
+        "Automatic JSON parsing",
+        "Smart UFU handling"
+      ]
+    },
+    {
+      "id": "coming-soon",
+      "title": "Coming Soon",
+      "shortTitle": "Coming Soon",
+      "description": "",
+      "status": "pending",
+      "backgroundColor": "bg-gray-500",
+      "url": "",
+      "bullets": []
+    }
+  ]
+}
