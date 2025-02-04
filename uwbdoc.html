@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Utaite Wiki Bot Commands</title>
+    <script crossorigin="anonymous" defer="defer" type="application/javascript" src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="max-w-4xl mx-auto py-8 px-4">
+        <h1 class="text-4xl font-bold text-center mb-8 text-gray-800">Utaite Wiki Bot Commands</h1>
+        
+        <!-- Introduction -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <p class="text-gray-700">
+                The Utaite Wiki Bot provides several commands to help you interact with the Utaite Wiki. Below you'll find detailed documentation for each command.
+            </p>
+        </div>
+
+        <!-- searchcat command -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">!searchcat</h2>
+            <div class="space-y-4">
+                <div>
+                    <h3 class="font-medium text-gray-700">Description</h3>
+                    <p class="text-gray-600">Search for pages in one or more categories with paginated results.</p>
+                </div>
+                <div>
+                    <h3 class="font-medium text-gray-700">Usage</h3>
+                    <div class="bg-gray-50 rounded p-4">
+                        <code class="text-sm text-gray-800">!searchcat category_name</code>
+                        <br>
+                        <code class="text-sm text-gray-800">!searchcat category1, category2, category3</code>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-medium text-gray-700">Features</h3>
+                    <ul class="list-disc list-inside text-gray-600 space-y-2">
+                        <li>Shows clickable links to wiki pages</li>
+                        <li>Pagination with arrow buttons (⬅️ and ➡️)</li>
+                        <li>Go to specific page functionality</li>
+                        <li>Displays 10 results per page</li>
+                        <li>Shows total result count</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-medium text-gray-700">Examples</h3>
+                    <div class="bg-gray-50 rounded p-4 space-y-2">
+                        <p class="text-sm text-gray-800">!searchcat Male Utaite</p>
+                        <p class="text-sm text-gray-800">!searchcat Male Utaite, Deceased</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- template command -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">!template</h2>
+            <div class="space-y-4">
+                <div>
+                    <h3 class="font-medium text-gray-700">Description</h3>
+                    <p class="text-gray-600">Explains a template's usage and parameters with detailed documentation.</p>
+                </div>
+                <div>
+                    <h3 class="font-medium text-gray-700">Usage</h3>
+                    <div class="bg-gray-50 rounded p-4">
+                        <code class="text-sm text-gray-800">!template template_name</code>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-medium text-gray-700">Features</h3>
+                    <ul class="list-disc list-inside text-gray-600 space-y-2">
+                        <li>Shows template usage syntax</li>
+                        <li>Displays comprehensive documentation</li>
+                        <li>Handles long documentation with multiple embeds</li>
+                        <li>Removes HTML tags for cleaner display</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-medium text-gray-700">Examples</h3>
+                    <div class="bg-gray-50 rounded p-4 space-y-2">
+                        <p class="text-sm text-gray-800">!template Song_Infobox</p>
+                        <p class="text-sm text-gray-800">!template Utaite_Infobox</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- searchfile command -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">!searchfile</h2>
+            <div class="space-y-4">
+                <div>
+                    <h3 class="font-medium text-gray-700">Description</h3>
+                    <p class="text-gray-600">Search for a file and retrieve its license information.</p>
+                </div>
+                <div>
+                    <h3 class="font-medium text-gray-700">Usage</h3>
+                    <div class="bg-gray-50 rounded p-4">
+                        <code class="text-sm text-gray-800">!searchfile filename</code>
+                        <br>
+                        <code class="text-sm text-gray-800">!searchfile File:filename</code>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-medium text-gray-700">Features</h3>
+                    <ul class="list-disc list-inside text-gray-600 space-y-2">
+                        <li>Automatically adds 'File:' prefix if not provided</li>
+                        <li>Displays file license information</li>
+                        <li>Shows error message if file not found</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-medium text-gray-700">Examples</h3>
+                    <div class="bg-gray-50 rounded p-4 space-y-2">
+                        <p class="text-sm text-gray-800">!searchfile soraru.jpg</p>
+                        <p class="text-sm text-gray-800">!searchfile File:mafumafu.png</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center text-gray-600 mt-8">
+            <p>For any issues or questions, please contact the bot administrator.</p>
+        </div>
+    </div>
+</body>
+</html>
