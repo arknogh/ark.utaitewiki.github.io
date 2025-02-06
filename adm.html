@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Album Data Formatter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen p-8">
+    <div id="app" class="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-6 mb-20">
+        <h1 class="text-2xl font-bold mb-6 text-gray-800">Album Data Formatter</h1>
+
+        <div id="basic-fields-container" class="mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">Basic Information</h2>
+            <div id="basic-fields" class="space-y-3">
+                <!-- Basic fields will be inserted here by JavaScript -->
+            </div>
+        </div>
+
+        <div id="tracks-container" class="mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">Track Information</h2>
+            <div id="tracks" class="space-y-6">
+                <!-- Track fields will be inserted here by JavaScript -->
+            </div>
+        </div>
+
+        <div class="flex space-x-4">
+            <button id="copy-basic-button" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                Copy Basic Info
+            </button>
+            <button id="copy-tracks-button" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                Copy Track Info
+            </button>
+            <button id="copy-all-button" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                Copy All
+            </button>
+            <button id="clear-button" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                Clear All
+            </button>
+        </div>
+    </div>
+
+    <!-- Floating Add Track Button -->
+    <button 
+        id="add-track-button"
+        class="fixed bottom-8 right-8 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 flex items-center justify-center text-2xl"
+    >
+        +
+    </button>
+
+    <script>
+        class AlbumFormatter {
+            constructor() {
+                this.fields = [
+                    'albumtitle', 'image', 'imagealt', 'imagealt3', 'imagealt4', 'imagealt5',
+                    'albumartist', 'datereleased', 'crossfadeyt', 'crossfadennd',
+                    'streams', 'shops', 'downloads'
+                ];
+
+                this.trackFields = ['title', 'info', 'utaite', 'lyricist', 'composer', 'arranger'];
+                this.trackCount = 0;
+                
+                this.init();
+            }
+
+            init() {
+                this.createBasicFields();
+                this.bindEvents();
+            }
+
+            createBasicFields() {
+                const container = document.getElementById('basic-fields');
+                
+                this.fields.forEach(field => {
+                    const fieldGroup = document.createElement('div');
+                    fieldGroup.className = 'flex items-center';
+                    
+                    fieldGroup.innerHTML = `
+                        <label class="w-40 text-sm font-medium text-gray-700">${field}:</label>
+                        <input 
+                            type="text" 
+                            id="field-${field}"
+                            class="flex-1 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                        >
+                    `;
+                    
+                    container.appendChild(fieldGroup);
+                });
+            }
+
+            createTrackSection() {
+                this.trackCount++;
+                const trackNum = this.trackCount;
+                
+                const container = document.getElementById('tracks');
+                const trackSection = document.createElement('div');
+                trackSection.id = `track-${trackNum}`;
+                trackSection.className = 'border border-gray-200 rounded-lg p-4 relative';
+                
+                trackSection.innerHTML = `
+                    <button 
+                        class="absolute top-2 right-2 text-red-600 hover:text-red-800"
+                        onclick="albumFormatter.removeTrack(${trackNum})"
+                    >
+                        ×
+                    </button>
+                    <h3 class="text-lg font-medium mb-3">Track ${trackNum}</h3>
+                    <div class="space-y-3">
+                        ${this.trackFields.map(field => `
+                            <div class="flex items-center">
+                                <label class="w-40 text-sm font-medium text-gray-700">${field}:</label>
+                                <input 
+                                    type="text" 
+                                    id="track-${trackNum}-${field}"
+                                    class="flex-1 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                >
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                
+                container.appendChild(trackSection);
+                this.reorderTracks();
+            }
+
+            removeTrack(trackNum) {
+                const track = document.getElementById(`track-${trackNum}`);
+                if (track) {
+                    track.remove();
+                    this.reorderTracks();
+                }
+            }
+
+            reorderTracks() {
+                const tracks = document.getElementById('tracks');
+                const trackElements = Array.from(tracks.children);
+                
+                trackElements.forEach((track, index) => {
+                    const trackNumber = index + 1;
+                    track.querySelector('h3').textContent = `Track ${trackNumber}`;
+                });
+            }
+
+            bindEvents() {
+                document.getElementById('add-track-button').addEventListener('click', () => 
+                    this.createTrackSection());
+
+                document.getElementById('copy-basic-button').addEventListener('click', () => 
+                    this.copyBasicInfo());
+                document.getElementById('copy-tracks-button').addEventListener('click', () => 
+                    this.copyTrackInfo());
+                document.getElementById('copy-all-button').addEventListener('click', () => 
+                    this.copyAllInfo());
+                document.getElementById('clear-button').addEventListener('click', () => 
+                    this.clearAll());
+            }
+
+            async copyToClipboard(text) {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    this.showNotification('Copied to clipboard!');
+                } catch (err) {
+                    this.showNotification('Failed to copy to clipboard', true);
+                }
+            }
+
+            showNotification(message, isError = false) {
+                const notification = document.createElement('div');
+                notification.className = `fixed top-4 right-4 p-4 rounded-md ${
+                    isError ? 'bg-red-500' : 'bg-green-500'
+                } text-white`;
+                notification.textContent = message;
+                
+                document.body.appendChild(notification);
+                setTimeout(() => notification.remove(), 3000);
+            }
+
+            getBasicInfo() {
+                let text = '';
+                for (const field of this.fields) {
+                    const value = document.getElementById(`field-${field}`).value;
+                    if (value) text += `${field}: ${value}\n`;
+                }
+                return text;
+            }
+
+            getTrackInfo() {
+                let text = '';
+                const tracks = document.getElementById('tracks').children;
+                
+                Array.from(tracks).forEach((track, index) => {
+                    const trackNum = index + 1;
+                    text += `\nTrack ${trackNum}:\n`;
+                    
+                    for (const field of this.trackFields) {
+                        const value = document.getElementById(`track-${trackNum}-${field}`).value;
+                        if (value) text += `${field}: ${value}\n`;
+                    }
+                });
+                
+                return text;
+            }
+
+            copyBasicInfo() {
+                this.copyToClipboard(this.getBasicInfo());
+            }
+
+            copyTrackInfo() {
+                this.copyToClipboard(this.getTrackInfo());
+            }
+
+            copyAllInfo() {
+                this.copyToClipboard(this.getBasicInfo() + '\n' + this.getTrackInfo());
+            }
+
+            clearAll() {
+                // Clear basic fields
+                this.fields.forEach(field => {
+                    document.getElementById(`field-${field}`).value = '';
+                });
+                
+                // Remove all tracks
+                const tracks = document.getElementById('tracks');
+                tracks.innerHTML = '';
+                this.trackCount = 0;
+                
+                this.showNotification('All fields cleared');
+            }
+        }
+
+        // Initialize when document is ready
+        let albumFormatter;
+        document.addEventListener('DOMContentLoaded', () => {
+            albumFormatter = new AlbumFormatter();
+        });
+    </script>
+</body>
+</html>
