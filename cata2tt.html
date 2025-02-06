@@ -135,6 +135,23 @@ composer: KoTa, Yuichi Harada
             };
     
             const singleTitle = input.match(/albumtitle:\s*(.+)/);
+
+            // Add titles based on which format is present
+            if (officialTitles.jap || officialTitles.rom || officialTitles.eng) {
+                // Add each official title if it exists
+                if (officialTitles.jap) {
+                    templateText += `|officialjaptitle = ${officialTitles.jap[1].trim()}\n`;
+                }
+                if (officialTitles.rom) {
+                    templateText += `|officialromtitle = ${officialTitles.rom[1].trim()}\n`;
+                }
+                if (officialTitles.eng) {
+                    templateText += `|officialengtitle = ${officialTitles.eng[1].trim()}\n`;
+                }
+            } else if (singleTitle) {
+                // Use single albumtitle if that's what's provided
+                templateText += `|albumtitle = ${singleTitle[1].trim()}\n`;
+            }
             
             // Basic album info parsing with albumartist included
             const basicInfo = {
@@ -153,23 +170,6 @@ composer: KoTa, Yuichi Harada
                     const processedValue = convertLToLType2(value[1].trim());
                     templateText += `|${key} = ${processedValue}\n`;
                 }
-            }
-
-            // Add titles based on which format is present
-            if (officialTitles.jap || officialTitles.rom || officialTitles.eng) {
-                // Add each official title if it exists
-                if (officialTitles.jap) {
-                    templateText += `|officialjaptitle = ${officialTitles.jap[1].trim()}\n`;
-                }
-                if (officialTitles.rom) {
-                    templateText += `|officialromtitle = ${officialTitles.rom[1].trim()}\n`;
-                }
-                if (officialTitles.eng) {
-                    templateText += `|officialengtitle = ${officialTitles.eng[1].trim()}\n`;
-                }
-            } else if (singleTitle) {
-                // Use single albumtitle if that's what's provided
-                templateText += `|albumtitle = ${singleTitle[1].trim()}\n`;
             }
 
             // Add Spotify album ID if present in streams
