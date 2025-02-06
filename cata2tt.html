@@ -101,6 +101,7 @@ shops: {{l|amazon|B072B9R6CJ}}
 Track 1:
 title: Mr.Fake
 info: Theme Song of TV Drama "Tomodachi Game" {{yt|QemU5T44I_U}}
+utaite: Amatsuki
 lyricist: Shou Watanabe, Amatsuki
 composer: Shou Watanabe
 arranger: Masato Nakayama
@@ -108,6 +109,7 @@ arranger: Masato Nakayama
 Track 2:
 title: Tsunageru {{yt|LgDHZoczBGo}}
 info: The Theme Song for Docomo Tohoku Reconstruction and Revitalization 'Smile Bridge Rainbow Project'
+utaite: Amatsuki
 lyricist: Kei Hayashi
 composer: Kei Hayashi
 arranger: {{VW|Tanahashi UNA Nobuhito}}
@@ -115,6 +117,7 @@ arranger: {{VW|Tanahashi UNA Nobuhito}}
 Track 3:
 title: Mirai no Seimei {{yt|Mwt7dcPgD4s}}
 info: The Theme Song for the Stage Play '[http://mottorekishi.com/yoshiteru/ Swordmaster General Yoshiteru ~To Those Who Inherit the Stars~]'
+utaite: Amatsuki
 lyricist: [[Amatsuki]], Reina Hasegawa
 composer: KoTa, Yuichi Harada
 `;
@@ -125,9 +128,17 @@ composer: KoTa, Yuichi Harada
             const output = document.getElementById('albumInfoOutput');
             let templateText = '{{AlbumType2\n';
 
+            const officialTitles = {
+                jap: input.match(/officialjaptitle:\s*(.+)/),
+                rom: input.match(/officialromtitle:\s*(.+)/),
+                eng: input.match(/officialengtitle:\s*(.+)/)
+            };
+    
+            const singleTitle = input.match(/albumtitle:\s*(.+)/);
+            
             // Basic album info parsing with albumartist included
             const basicInfo = {
-                albumtitle: input.match(/albumtitle:\s*(.+)/),
+                //albumtitle: input.match(/albumtitle:\s*(.+)/),
                 albumartist: input.match(/albumartist:\s*(.+)/),
                 image: input.match(/image:\s*(.+)/),
                 datereleased: input.match(/datereleased:\s*(.+)/),
@@ -142,6 +153,23 @@ composer: KoTa, Yuichi Harada
                     const processedValue = convertLToLType2(value[1].trim());
                     templateText += `|${key} = ${processedValue}\n`;
                 }
+            }
+
+            // Add titles based on which format is present
+            if (officialTitles.jap || officialTitles.rom || officialTitles.eng) {
+                // Add each official title if it exists
+                if (officialTitles.jap) {
+                    templateText += `|officialjaptitle = ${officialTitles.jap[1].trim()}\n`;
+                }
+                if (officialTitles.rom) {
+                    templateText += `|officialromtitle = ${officialTitles.rom[1].trim()}\n`;
+                }
+                if (officialTitles.eng) {
+                    templateText += `|officialengtitle = ${officialTitles.eng[1].trim()}\n`;
+                }
+            } else if (singleTitle) {
+                // Use single albumtitle if that's what's provided
+                templateText += `|albumtitle = ${singleTitle[1].trim()}\n`;
             }
 
             // Add Spotify album ID if present in streams
