@@ -154,34 +154,46 @@ composer: KoTa, Yuichi Harada
 
             // Process tracks
             templateText += '\n|track=\n';
-
+            
             // Match all track entries using named capture groups
             const trackPattern = /Track\s+(?<number>\d+):\s*\ntitle:\s*(?<title>[^\n]+)(?:\ninfo:\s*(?<info>[^\n]+))?(?:\nlyricist:\s*(?<lyricist>[^\n]+))?(?:\ncomposer:\s*(?<composer>[^\n]+))?(?:\narranger:\s*(?<arranger>[^\n]+))?/g;
 
-            // Use matchAll for better iteration over matches
-            for (const match of input.matchAll(trackPattern)) {
-                const {
-                    number,
-                    title,
-                    info = '',
-                    lyricist = '',
-                    composer = '',
-                    arranger = ''
-                } = match.groups;
-
-                // Format track entry and convert l to LType2
-                templateText += `{{Track|${number}` +
-                              `|title=${title.trim()}` +
-                              `|additionalshortinfo=${convertLToLType2(info.trim())}`;
-
-                if (lyricist) templateText += `|lyricist=${lyricist.trim()}`;
-                if (composer) templateText += `|composer=${composer.trim()}`;
-                if (arranger) templateText += `|arranger=${arranger.trim()}`;
-
-                templateText += '}}\n';
+            let isFirstTrack = true;
+            let tracks = [...input.matchAll(trackPattern)];
+            tracks.forEach((match, index) => {
+            const isLastTrack = index === tracks.length - 1;
+            const {
+                number,
+                title,
+                info = '',
+                lyricist = '',
+                composer = '',
+                arranger = ''
+            } = match.groups;
+        
+            if (!isFirstTrack) {
+                templateText += '-->';  // Add --> before non-first tracks
             }
-
+        
+            // Format track entry and convert l to LType2
+            templateText += `{{Track|${number}\n` +
+                          `|title=${title.trim()}\n` +
+                          `|additionalshortinfo=${convertLToLType2(info.trim())}\n`;
+        
+            if (lyricist) templateText += `|lyricist=${lyricist.trim()}\n`;
+            if (composer) templateText += `|composer=${composer.trim()}\n`;
+            if (arranger) templateText += `|arranger=${arranger.trim()}\n`;
+        
             templateText += '}}';
+            
+            if (!isLastTrack) {
+                templateText += '<!--\n\n';  // Add <!-- and two newlines after }} for non-last tracks
+            }
+        
+            isFirstTrack = false;
+        });
+        
+        templateText += '\n}}';
             output.value = templateText;
         };
 
