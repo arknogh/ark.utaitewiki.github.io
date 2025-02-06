@@ -156,7 +156,7 @@ composer: KoTa, Yuichi Harada
             templateText += '\n|track=\n';
             
             // Match all track entries using named capture groups
-            const trackPattern = /Track\s+(?<number>\d+):\s*\ntitle:\s*(?<title>[^\n]+)(?:\ninfo:\s*(?<info>[^\n]+))?(?:\nlyricist:\s*(?<lyricist>[^\n]+))?(?:\ncomposer:\s*(?<composer>[^\n]+))?(?:\narranger:\s*(?<arranger>[^\n]+))?/g;
+            const trackPattern = /Track\s+(?<number>\d+):\s*\ntitle:\s*(?<title>[^\n]+)(?:\ninfo:\s*(?<info>[^\n]+))?(?:\nutaite:\s*(?<utaite>[^\n]+))?(?:\nlyricist:\s*(?<lyricist>[^\n]+))?(?:\ncomposer:\s*(?<composer>[^\n]+))?(?:\narranger:\s*(?<arranger>[^\n]+))?/g;
 
             let isFirstTrack = true;
             let tracks = [...input.matchAll(trackPattern)];
@@ -166,6 +166,7 @@ composer: KoTa, Yuichi Harada
                 number,
                 title,
                 info = '',
+                utaite = '',
                 lyricist = '',
                 composer = '',
                 arranger = ''
@@ -180,6 +181,7 @@ composer: KoTa, Yuichi Harada
                           `|title=${title.trim()}\n` +
                           `|additionalshortinfo=${convertLToLType2(info.trim())}\n`;
         
+            if (utaite) templateText += `|singers=${utaite.trim()}\n`;
             if (lyricist) templateText += `|lyricist=${lyricist.trim()}\n`;
             if (composer) templateText += `|composer=${composer.trim()}\n`;
             if (arranger) templateText += `|arranger=${arranger.trim()}\n`;
