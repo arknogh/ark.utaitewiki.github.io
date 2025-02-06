@@ -9,6 +9,15 @@
 <body class="bg-gray-50 min-h-screen p-8">
     <div id="app" class="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-6 mb-20">
         <h1 class="text-2xl font-bold mb-6 text-gray-800">Album Data Formatter</h1>
+        
+        <!-- Title Format Toggle -->
+        <div class="mb-6">
+            <label class="inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="title-format-toggle" class="sr-only peer">
+                <div class="relative w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                <span class="ml-3 text-sm font-medium text-gray-700">Use separate Japanese/Romaji/English titles</span>
+            </label>
+        </div>
 
         <div id="basic-fields-container" class="mb-8">
             <h2 class="text-xl font-semibold mb-4 text-gray-800">Basic Information</h2>
@@ -16,14 +25,12 @@
                 <!-- Basic fields will be inserted here by JavaScript -->
             </div>
         </div>
-
         <div id="tracks-container" class="mb-8">
             <h2 class="text-xl font-semibold mb-4 text-gray-800">Track Information</h2>
             <div id="tracks" class="space-y-6">
                 <!-- Track fields will be inserted here by JavaScript -->
             </div>
         </div>
-
         <div class="flex space-x-4">
             <button id="copy-basic-button" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
                 Copy Basic Info
@@ -39,7 +46,6 @@
             </button>
         </div>
     </div>
-
     <!-- Floating Add Track Button -->
     <button 
         id="add-track-button"
@@ -47,20 +53,26 @@
     >
         +
     </button>
-
     <script>
         class AlbumFormatter {
             constructor() {
-                this.fields = [
-                    'albumtitle', 'image', 'imagealt', 'imagealt3', 'imagealt4', 'imagealt5',
+                this.baseFields = [
+                    'image', 'imagealt', 'imagealt3', 'imagealt4', 'imagealt5',
                     'albumartist', 'datereleased', 'crossfadeyt', 'crossfadennd',
                     'streams', 'shops', 'downloads'
                 ];
-
                 this.trackFields = ['title', 'info', 'utaite', 'lyricist', 'composer', 'arranger'];
                 this.trackCount = 0;
+                this.useSeparateTitles = false;
                 
                 this.init();
+            }
+
+            get fields() {
+                if (this.useSeparateTitles) {
+                    return ['officialjaptitle', 'officialromtitle', 'officialengtitle', ...this.baseFields];
+                }
+                return ['albumtitle', ...this.baseFields];
             }
 
             init() {
@@ -70,13 +82,19 @@
 
             createBasicFields() {
                 const container = document.getElementById('basic-fields');
+                container.innerHTML = ''; // Clear existing fields
                 
                 this.fields.forEach(field => {
                     const fieldGroup = document.createElement('div');
                     fieldGroup.className = 'flex items-center';
                     
+                    let labelText = field;
+                    if (field === 'officialjaptitle') labelText = 'Official Japanese Title';
+                    if (field === 'officialromtitle') labelText = 'Official Romaji Title';
+                    if (field === 'officialengtitle') labelText = 'Official English Title';
+                    
                     fieldGroup.innerHTML = `
-                        <label class="w-40 text-sm font-medium text-gray-700">${field}:</label>
+                        <label class="w-40 text-sm font-medium text-gray-700">${labelText}:</label>
                         <input 
                             type="text" 
                             id="field-${field}"
@@ -144,7 +162,6 @@
             bindEvents() {
                 document.getElementById('add-track-button').addEventListener('click', () => 
                     this.createTrackSection());
-
                 document.getElementById('copy-basic-button').addEventListener('click', () => 
                     this.copyBasicInfo());
                 document.getElementById('copy-tracks-button').addEventListener('click', () => 
@@ -153,6 +170,10 @@
                     this.copyAllInfo());
                 document.getElementById('clear-button').addEventListener('click', () => 
                     this.clearAll());
+                document.getElementById('title-format-toggle').addEventListener('change', (e) => {
+                    this.useSeparateTitles = e.target.checked;
+                    this.createBasicFields();
+                });
             }
 
             async copyToClipboard(text) {
@@ -179,7 +200,10 @@
                 let text = '';
                 for (const field of this.fields) {
                     const value = document.getElementById(`field-${field}`).value;
-                    if (value) text += `${field}: ${value}\n`;
+                    if (value) {
+                        // Use the field name directly - no special formatting needed anymore
+                        text += `${field}: ${value}\n`;
+                    }
                 }
                 return text;
             }
