@@ -158,6 +158,10 @@ composer: KoTa, Yuichi Harada
                 //albumtitle: input.match(/albumtitle:\s*(.+)/),
                 albumartist: input.match(/albumartist:\s*(.+)/),
                 image: input.match(/image:\s*(.+)/),
+                imagealt: input.match(/imagealt:\s*(.+)/),
+                image3: input.match(/image3:\s*(.+)/),
+                image4: input.match(/image4:\s*(.+)/),
+                image5: input.match(/image5:\s*(.+)/),
                 datereleased: input.match(/datereleased:\s*(.+)/),
                 crossfadeyt: input.match(/crossfadeyt:\s*(.+)/),
                 streams: input.match(/streams:\s*(.+)/),
@@ -167,8 +171,12 @@ composer: KoTa, Yuichi Harada
             // Add basic info to template and convert l to LType2
             for (const [key, value] of Object.entries(basicInfo)) {
                 if (value) {
+                    let outputKey = key;
+                    if (key === 'image3') outputKey = 'imagealt2';
+                    if (key === 'image4') outputKey = 'imagealt3';
+                    if (key === 'image5') outputKey = 'imagealt4';
                     const processedValue = convertLToLType2(value[1].trim());
-                    templateText += `|${key} = ${processedValue}\n`;
+                    templateText += `|${outputKey} = ${processedValue}\n`;
                 }
             }
 
