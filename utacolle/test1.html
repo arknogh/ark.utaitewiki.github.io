@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Utacolle JSON Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">Utacolle JSON Format Converter</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Input Section -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold mb-4">Input JSON</h2>
+                <textarea 
+                    id="inputJson" 
+                    class="w-full h-96 p-4 border rounded font-mono text-sm"
+                    placeholder='[
+  {
+    "ranking": "1",
+    "song_title": "Butter-Fly",
+    "utaite": "つきみぐー、",
+    "video_id": "sm44324666",
+    "ufu": "Tsukimi"
+  },
+  ...
+]'></textarea>
+                <button 
+                    onclick="convertJson()" 
+                    class="mt-4 bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600">
+                    Convert
+                </button>
+            </div>
+            <!-- Output Section -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold mb-4">Output JSON</h2>
+                <textarea 
+                    id="outputJson" 
+                    class="w-full h-96 p-4 border rounded font-mono text-sm" 
+                    readonly></textarea>
+                <button 
+                    onclick="copyOutput()" 
+                    class="mt-4 bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600">
+                    Copy to Clipboard
+                </button>
+            </div>
+        </div>
+    </div>
+    <script>
+        function convertJson() {
+            try {
+                // Parse input JSON
+                const input = JSON.parse(document.getElementById('inputJson').value);
+                
+                // Convert to new format
+                const converted = input.map(item => {
+                    // Always include utaite, but with empty utaiteWiki if ufu is missing
+                    return {
+                        ranking: parseInt(item.ranking),
+                        songTitle: item.song_title,
+                        utaiteWiki: item.ufu || '',
+                        utaiteDisplay: item.utaite || '',
+                        videoId: item.video_id
+                    };
+                });
+
+                // Format output with proper indentation
+                document.getElementById('outputJson').value = JSON.stringify(converted, null, 2);
+            } catch (error) {
+                alert('Error parsing JSON: ' + error.message);
+            }
+        }
+
+        function copyOutput() {
+            const outputText = document.getElementById('outputJson');
+            outputText.select();
+            document.execCommand('copy');
+            
+            // Visual feedback
+            const button = event.target;
+            const originalText = button.textContent;
+            button.textContent = 'Copied!';
+            button.classList.remove('bg-green-500', 'hover:bg-green-600');
+            button.classList.add('bg-gray-500', 'hover:bg-gray-600');
+            
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.classList.remove('bg-gray-500', 'hover:bg-gray-600');
+                button.classList.add('bg-green-500', 'hover:bg-green-600');
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
