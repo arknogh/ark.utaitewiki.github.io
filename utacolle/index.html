@@ -135,7 +135,8 @@
                     .filter(item => 
                         item.path.startsWith(directory + '/') && 
                         item.path.endsWith('.html') &&
-                        !item.path.endsWith('index.html')
+                        !item.path.endsWith('index.html') &&
+                        !item.path.endsWith('oldjsontonewjsonconverter.html')
                     )
                     .map(item => ({
                         filename: item.path.split('/').pop(),
