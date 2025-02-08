@@ -78,11 +78,12 @@
                     throw new Error('No tree data found');
                 }
 
-                // Filter for HTML files in the utacolle directory
+                // Filter for HTML files in the utacolle directory, excluding index.html
                 return data.tree
                     .filter(item => 
                         item.path.startsWith(directory + '/') && 
-                        item.path.endsWith('.html')
+                        item.path.endsWith('.html') &&
+                        !item.path.endsWith('index.html')  // Add this condition to filter out index.html
                     )
                     .map(item => ({
                         filename: item.path.split('/').pop(),
