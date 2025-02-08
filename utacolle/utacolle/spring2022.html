@@ -15,13 +15,25 @@
     <div class="max-w-7xl mx-auto">
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-bold">Utacolle Rankings</h1>
-            <button onclick="openAddModal()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                Add New Entry
-            </button>
+            <div class="space-x-2">
+                <button onclick="openAddModal()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    Add New Entry
+                </button>
+                <button onclick="exportData()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                    Export Data
+                </button>
+                <button onclick="openImportModal()" class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600">
+                    Import Data
+                </button>
+            </div>
         </div>
 
         <div class="bg-white rounded-lg shadow p-6">
             <div class="mb-4">
+                <div class="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4">
+                    <p class="font-bold">Important Notice:</p>
+                    <p>Please remember to regularly export and save your data to a .txt file. Browser storage can be cleared unexpectedly, which would result in data loss. Use the Export button above to save your work!</p>
+                </div>
                 <textarea id="outputText" class="w-full h-32 p-2 border rounded" readonly></textarea>
                 <button onclick="copyOutput()" class="mt-2 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
                     Copy Output
@@ -78,6 +90,27 @@
                 </button>
                 <button onclick="saveEntry()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
                     Save
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div id="importModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg w-full max-w-md">
+            <h2 class="text-xl font-bold mb-4">Import Data</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Paste your exported data here:</label>
+                    <textarea id="importData" class="mt-1 w-full h-48 border rounded p-2"></textarea>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end space-x-4">
+                <button onclick="closeImportModal()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                    Cancel
+                </button>
+                <button onclick="importData()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    Import
                 </button>
             </div>
         </div>
@@ -152,6 +185,45 @@
                 .map(r => `{{FUCE|${r.ranking}|${r.songTitle}|[[${r.utaiteWiki}|${r.utaiteDisplay}]]|${r.videoId}}}`)
                 .join('\n');
             $('#outputText').val(output);
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify(rankings, null, 2);
+            const blob = new Blob([dataStr], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'utacolle_rankings.txt';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            toastr.success('Data exported successfully');
+        }
+
+        function openImportModal() {
+            $('#importModal').removeClass('hidden');
+        }
+
+        function closeImportModal() {
+            $('#importModal').addClass('hidden');
+            $('#importData').val('');
+        }
+
+        function importData() {
+            try {
+                const importedData = JSON.parse($('#importData').val());
+                if (Array.isArray(importedData)) {
+                    rankings = importedData;
+                    updateTable();
+                    closeImportModal();
+                    toastr.success('Data imported successfully');
+                } else {
+                    toastr.error('Invalid data format');
+                }
+            } catch (e) {
+                toastr.error('Invalid JSON format');
+            }
         }
 
         function openAddModal() {
