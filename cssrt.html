@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subtitle Converter</title>
+    <script src="https://cdn.jsdelivr.net/npm/@xsstomy/subsrt@1.0.0/lib/subsrt.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center mb-8">Subtitle Format Converter</h1>
+        
+        <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Input Format:</label>
+                <select id="inputFormat" class="w-full p-2 border rounded">
+                    <option value="auto">Auto Detect</option>
+                    <option value="srt">SRT</option>
+                    <option value="vtt">VTT</option>
+                    <option value="ass">ASS/SSA</option>
+                    <option value="smi">SMI</option>
+                </select>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Output Format:</label>
+                <select id="outputFormat" class="w-full p-2 border rounded">
+                    <option value="srt">SRT</option>
+                    <option value="vtt">VTT</option>
+                    <option value="ass">ASS/SSA</option>
+                    <option value="smi">SMI</option>
+                </select>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Upload Subtitle File:</label>
+                <div class="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
+                    <div class="text-center">
+                        <div class="mt-4 flex text-sm leading-6 text-gray-600">
+                            <label for="file-upload" class="relative cursor-pointer rounded-md bg-white font-semibold text-blue-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-600 focus-within:ring-offset-2 hover:text-blue-500">
+                                <span>Upload a file</span>
+                                <input id="file-upload" name="file-upload" type="file" class="sr-only" accept=".srt,.vtt,.ass,.ssa,.smi">
+                            </label>
+                            <p class="pl-1">or drag and drop</p>
+                        </div>
+                        <p class="text-xs leading-5 text-gray-600">SRT, VTT, ASS/SSA, SMI files</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Input Subtitle:</label>
+                <textarea id="inputText" class="w-full p-2 border rounded h-48" placeholder="Paste your subtitle content here or upload a file above..."></textarea>
+            </div>
+
+            <div class="flex justify-center mb-6">
+                <button id="convertBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    Convert
+                </button>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Output:</label>
+                <textarea id="outputText" class="w-full p-2 border rounded h-48" readonly></textarea>
+            </div>
+
+            <div class="flex justify-center">
+                <button id="downloadBtn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" disabled>
+                    Download
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const inputFormatSelect = document.getElementById('inputFormat');
+        const outputFormatSelect = document.getElementById('outputFormat');
+        const inputTextArea = document.getElementById('inputText');
+        const outputTextArea = document.getElementById('outputText');
+        const convertBtn = document.getElementById('convertBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const fileUpload = document.getElementById('file-upload');
+        const dropZone = document.querySelector('.border-dashed');
+
+        // File upload handling
+        fileUpload.addEventListener('change', handleFileSelect);
+        dropZone.addEventListener('dragover', handleDragOver);
+        dropZone.addEventListener('drop', handleDrop);
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                readFile(file);
+            }
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.dataTransfer.dropEffect = 'copy';
+            dropZone.classList.add('border-blue-500');
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            dropZone.classList.remove('border-blue-500');
+            
+            const file = event.dataTransfer.files[0];
+            if (file) {
+                readFile(file);
+            }
+        }
+
+        function readFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                inputTextArea.value = e.target.result;
+                // Auto-detect format from file extension
+                const extension = file.name.split('.').pop().toLowerCase();
+                if (['srt', 'vtt', 'ass', 'ssa', 'smi'].includes(extension)) {
+                    inputFormatSelect.value = extension === 'ssa' ? 'ass' : extension;
+                } else {
+                    inputFormatSelect.value = 'auto';
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Handle conversion
+        convertBtn.addEventListener('click', () => {
+            try {
+                const inputFormat = inputFormatSelect.value;
+                const outputFormat = outputFormatSelect.value;
+                const inputContent = inputTextArea.value;
+
+                if (!inputContent) {
+                    alert('Please input subtitle content or upload a file');
+                    return;
+                }
+
+                // Parse input subtitle
+                const parsedContent = inputFormat === 'auto' 
+                    ? subsrt.parse(inputContent)
+                    : subsrt.parse(inputContent, { format: inputFormat });
+
+                // Convert to output format
+                const result = subsrt.build(parsedContent, { format: outputFormat });
+                
+                outputTextArea.value = result;
+                downloadBtn.disabled = false;
+            } catch (error) {
+                alert('Error converting subtitle: ' + error.message);
+                console.error(error);
+            }
+        });
+
+        // Handle download
+        downloadBtn.addEventListener('click', () => {
+            const outputFormat = outputFormatSelect.value;
+            const content = outputTextArea.value;
+            
+            if (!content) return;
+
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `converted_subtitle.${outputFormat}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+    </script>
+</body>
+</html>
