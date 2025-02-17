@@ -358,10 +358,12 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\
             const content = outputTextArea.value;
             
             if (!content) return;
-
             const title = titleInput.value.trim() || 'subtitle';
-            const safeTitle = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-
+            
+            // Remove any characters that are definitely invalid in filenames
+            const safeTitle = title.replace(/[<>:"/\\|?*\x00-\x1F]/g, '')
+                                  .replace(/^\.+/, ''); // Remove leading dots
+            
             const blob = new Blob([content], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
