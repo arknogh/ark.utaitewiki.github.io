@@ -12,10 +12,16 @@
         
         <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
             <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Title:</label>
+                <input type="text" id="titleInput" class="w-full p-2 border rounded" placeholder="Enter subtitle title...">
+            </div>
+
+            <div class="mb-6">
                 <label class="block text-gray-700 text-sm font-bold mb-2">Input Format:</label>
                 <select id="inputFormat" class="w-full p-2 border rounded">
                     <option value="srt">SRT</option>
                     <option value="vtt">VTT</option>
+                    <option value="ass">ASS/SSA</option>
                 </select>
             </div>
 
@@ -24,6 +30,7 @@
                 <select id="outputFormat" class="w-full p-2 border rounded">
                     <option value="srt">SRT</option>
                     <option value="vtt">VTT</option>
+                    <option value="ass">ASS/SSA</option>
                 </select>
             </div>
 
@@ -34,11 +41,11 @@
                         <div class="mt-4 flex text-sm leading-6 text-gray-600">
                             <label for="file-upload" class="relative cursor-pointer rounded-md bg-white font-semibold text-blue-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-600 focus-within:ring-offset-2 hover:text-blue-500">
                                 <span>Upload a file</span>
-                                <input id="file-upload" name="file-upload" type="file" class="sr-only" accept=".srt,.vtt">
+                                <input id="file-upload" name="file-upload" type="file" class="sr-only" accept=".srt,.vtt,.ass,.ssa">
                             </label>
                             <p class="pl-1">or drag and drop</p>
                         </div>
-                        <p class="text-xs leading-5 text-gray-600">SRT, VTT files</p>
+                        <p class="text-xs leading-5 text-gray-600">SRT, VTT, ASS/SSA files</p>
                     </div>
                 </div>
             </div>
@@ -69,11 +76,12 @@
 
     <script>
         class SubtitleEntry {
-            constructor(id, startTime, endTime, text) {
+            constructor(id, startTime, endTime, text, style = '') {
                 this.id = id;
                 this.startTime = startTime;
                 this.endTime = endTime;
                 this.text = text;
+                this.style = style;
             }
         }
 
@@ -85,11 +93,23 @@
                 return hours * 3600000 + minutes * 60000 + seconds * 1000 + parseInt(ms);
             }
 
+            static parseASSTime(timeStr) {
+                // Handle ASS format (h:mm:ss.cc)
+                const [time, cs] = timeStr.split('.');
+                const [hours, minutes, seconds] = time.split(':').map(Number);
+                return hours * 3600000 + minutes * 60000 + seconds * 1000 + parseInt(cs) * 10;
+            }
+
             static formatTimeString(ms, format) {
                 const hours = Math.floor(ms / 3600000);
                 const minutes = Math.floor((ms % 3600000) / 60000);
                 const seconds = Math.floor((ms % 60000) / 1000);
                 const milliseconds = ms % 1000;
+                
+                if (format === 'ass') {
+                    const centiseconds = Math.floor(milliseconds / 10);
+                    return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(centiseconds).padStart(2, '0')}`;
+                }
                 
                 const separator = format === 'vtt' ? '.' : ',';
                 return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}${separator}${String(milliseconds).padStart(3, '0')}`;
@@ -135,6 +155,50 @@
                 return entries;
             }
 
+            static parseASS(content) {
+                const entries = [];
+                const lines = content.split('\n');
+                let id = 1;
+                let inEvents = false;
+                let formatLine = '';
+                
+                for (const line of lines) {
+                    if (line.trim().startsWith('[Events]')) {
+                        inEvents = true;
+                        continue;
+                    }
+                    
+                    if (inEvents) {
+                        if (line.startsWith('Format:')) {
+                            formatLine = line.substring(7).trim();
+                            continue;
+                        }
+                        
+                        if (line.startsWith('Dialogue:')) {
+                            const parts = line.substring(9).trim().split(',');
+                            const format = formatLine.split(',').map(f => f.trim());
+                            
+                            // Find indices for start, end, and text in the format
+                            const startIndex = format.indexOf('Start');
+                            const endIndex = format.indexOf('End');
+                            const styleIndex = format.indexOf('Style');
+                            const textIndex = format.indexOf('Text');
+                            
+                            if (startIndex !== -1 && endIndex !== -1 && textIndex !== -1) {
+                                const startTime = this.parseASSTime(parts[startIndex].trim());
+                                const endTime = this.parseASSTime(parts[endIndex].trim());
+                                const style = styleIndex !== -1 ? parts[styleIndex].trim() : '';
+                                const text = parts.slice(textIndex).join(',').trim();
+                                
+                                entries.push(new SubtitleEntry(id++, startTime, endTime, text, style));
+                            }
+                        }
+                    }
+                }
+                
+                return entries;
+            }
+
             static buildSRT(entries) {
                 return entries.map(entry => {
                     return `${entry.id}\n${this.formatTimeString(entry.startTime, 'srt')} --> ${this.formatTimeString(entry.endTime, 'srt')}\n${entry.text}`
@@ -147,16 +211,63 @@
                 }).join('\n\n');
             }
 
+            static buildASS(entries) {
+                const header = `[Script Info]
+ScriptType: v4.00+
+PlayResX: 384
+PlayResY: 288
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n`;
+
+                const dialogues = entries.map(entry => {
+                    const start = this.formatTimeString(entry.startTime, 'ass');
+                    const end = this.formatTimeString(entry.endTime, 'ass');
+                    const style = entry.style || 'Default';
+                    return `Dialogue: 0,${start},${end},${style},,0,0,0,,${entry.text}`;
+                }).join('\n');
+
+                return header + dialogues;
+            }
+
             static convert(content, fromFormat, toFormat) {
                 // Parse input
-                const entries = fromFormat === 'srt' ? this.parseSRT(content) : this.parseVTT(content);
+                let entries;
+                switch (fromFormat) {
+                    case 'srt':
+                        entries = this.parseSRT(content);
+                        break;
+                    case 'vtt':
+                        entries = this.parseVTT(content);
+                        break;
+                    case 'ass':
+                        entries = this.parseASS(content);
+                        break;
+                    default:
+                        throw new Error('Unsupported input format');
+                }
                 
                 // Build output
-                return toFormat === 'srt' ? this.buildSRT(entries) : this.buildVTT(entries);
+                switch (toFormat) {
+                    case 'srt':
+                        return this.buildSRT(entries);
+                    case 'vtt':
+                        return this.buildVTT(entries);
+                    case 'ass':
+                        return this.buildASS(entries);
+                    default:
+                        throw new Error('Unsupported output format');
+                }
             }
         }
 
         // UI handling code
+        const titleInput = document.getElementById('titleInput');
         const inputFormatSelect = document.getElementById('inputFormat');
         const outputFormatSelect = document.getElementById('outputFormat');
         const inputTextArea = document.getElementById('inputText');
@@ -204,9 +315,12 @@
                 inputTextArea.value = e.target.result;
                 // Set format based on file extension
                 const extension = file.name.split('.').pop().toLowerCase();
-                if (['srt', 'vtt'].includes(extension)) {
-                    inputFormatSelect.value = extension;
+                if (['srt', 'vtt', 'ass', 'ssa'].includes(extension)) {
+                    inputFormatSelect.value = extension === 'ssa' ? 'ass' : extension;
                 }
+                // Set title from filename (removing extension)
+                const filename = file.name.replace(/\.[^/.]+$/, "");
+                titleInput.value = filename;
             };
             reader.readAsText(file);
         }
@@ -220,6 +334,12 @@
 
                 if (!inputContent) {
                     alert('Please input subtitle content or upload a file');
+                    return;
+                }
+
+                if (!titleInput.value.trim()) {
+                    alert('Please enter a title for the subtitle');
+                    titleInput.focus();
                     return;
                 }
 
@@ -239,11 +359,14 @@
             
             if (!content) return;
 
+            const title = titleInput.value.trim() || 'subtitle';
+            const safeTitle = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+
             const blob = new Blob([content], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `converted_subtitle.${outputFormat}`;
+            a.download = `${safeTitle}.${outputFormat}`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
