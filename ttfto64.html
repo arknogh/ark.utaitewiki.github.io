@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TTF to Base64 Converter</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .container {
+            border: 2px dashed #ccc;
+            padding: 2rem;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .container.dragover {
+            background: #f0f0f0;
+            border-color: #666;
+        }
+        .result-container {
+            margin-top: 1rem;
+        }
+        .result-item {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+        .result-item textarea {
+            width: 100%;
+            min-height: 60px;
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            word-break: break-all;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .file-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        button {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0.5rem;
+        }
+        button:hover {
+            background: #0052a3;
+        }
+        #status {
+            margin-top: 1rem;
+            color: #666;
+        }
+        .copy-button {
+            background: #28a745;
+        }
+        .copy-button:hover {
+            background: #218838;
+        }
+        .copy-all-button {
+            background: #17a2b8;
+        }
+        .copy-all-button:hover {
+            background: #138496;
+        }
+    </style>
+</head>
+<body>
+    <h1>TTF to Base64 Converter</h1>
+    <div id="dropZone" class="container">
+        <p>Drop TTF files here or click to select</p>
+        <input type="file" id="fileInput" accept=".ttf" multiple style="display: none">
+        <button id="selectButton">Select TTF Files</button>
+    </div>
+    <div>
+        <button id="copyAllButton" class="copy-all-button" style="display: none">Copy All to Clipboard</button>
+    </div>
+    <div id="status"></div>
+    <div id="results" class="result-container"></div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const selectButton = document.getElementById('selectButton');
+        const copyAllButton = document.getElementById('copyAllButton');
+        const results = document.getElementById('results');
+        const status = document.getElementById('status');
+
+        // Handle drag and drop events
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.add('dragover');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.remove('dragover');
+            });
+        });
+
+        // Handle file drop
+        dropZone.addEventListener('drop', handleDrop);
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            handleFiles([...dt.files]);
+        }
+
+        // Handle file selection via button
+        selectButton.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+            handleFiles([...e.target.files]);
+        });
+
+        // Process multiple files
+        function handleFiles(files) {
+            if (!files.length) return;
+            
+            // Clear previous results
+            results.innerHTML = '';
+            status.textContent = 'Converting...';
+            
+            let validFiles = files.filter(file => 
+                file.name.toLowerCase().endsWith('.ttf')
+            );
+            
+            if (validFiles.length === 0) {
+                status.textContent = 'Please select TTF files only.';
+                return;
+            }
+
+            Promise.all(validFiles.map(processFile))
+                .then(() => {
+                    status.textContent = `Converted ${validFiles.length} file${validFiles.length > 1 ? 's' : ''}!`;
+                    copyAllButton.style.display = 'inline-block';
+                })
+                .catch(error => {
+                    status.textContent = 'Error processing files!';
+                    console.error(error);
+                });
+        }
+
+        function processFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const base64 = e.target.result;
+                    const dataUrl = `data:font/ttf;charset=utf-8;base64,${base64.split(',')[1]}`;
+                    
+                    // Create result item
+                    const resultItem = document.createElement('div');
+                    resultItem.className = 'result-item';
+                    
+                    const fileName = document.createElement('div');
+                    fileName.className = 'file-name';
+                    fileName.textContent = file.name;
+                    
+                    const textarea = document.createElement('textarea');
+                    textarea.value = dataUrl;
+                    textarea.readOnly = true;
+                    
+                    const copyButton = document.createElement('button');
+                    copyButton.className = 'copy-button';
+                    copyButton.textContent = 'Copy';
+                    copyButton.onclick = () => {
+                        textarea.select();
+                        document.execCommand('copy');
+                        copyButton.textContent = 'Copied!';
+                        setTimeout(() => {
+                            copyButton.textContent = 'Copy';
+                        }, 2000);
+                    };
+                    
+                    resultItem.appendChild(fileName);
+                    resultItem.appendChild(copyButton);
+                    resultItem.appendChild(textarea);
+                    results.appendChild(resultItem);
+                    
+                    resolve();
+                };
+
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Copy all to clipboard functionality
+        copyAllButton.addEventListener('click', () => {
+            const allContent = Array.from(results.getElementsByTagName('textarea'))
+                .map(textarea => textarea.value)
+                .join('\n\n');
+            
+            const tempTextarea = document.createElement('textarea');
+            tempTextarea.value = allContent;
+            document.body.appendChild(tempTextarea);
+            tempTextarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempTextarea);
+            
+            status.textContent = 'All content copied to clipboard!';
+            setTimeout(() => {
+                status.textContent = '';
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
