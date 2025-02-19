@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Multi-File WOFF to Base64 Converter</title>
+    <title>WOFF/WOFF2 to Base64 Converter</title>
     <style>
         body {
             font-family: system-ui, -apple-system, sans-serif;
@@ -75,11 +75,11 @@
     </style>
 </head>
 <body>
-    <h1>Multi-File WOFF to Base64 Converter</h1>
+    <h1>WOFF/WOFF2 to Base64 Converter</h1>
     <div id="dropZone" class="container">
-        <p>Drop WOFF files here or click to select</p>
-        <input type="file" id="fileInput" accept=".woff" multiple style="display: none">
-        <button id="selectButton">Select WOFF Files</button>
+        <p>Drop WOFF/WOFF2 files here or click to select</p>
+        <input type="file" id="fileInput" accept=".woff,.woff2" multiple style="display: none">
+        <button id="selectButton">Select Font Files</button>
     </div>
     <div>
         <button id="copyAllButton" class="copy-all-button" style="display: none">Copy All to Clipboard</button>
@@ -138,10 +138,13 @@
             results.innerHTML = '';
             status.textContent = 'Converting...';
             
-            let validFiles = files.filter(file => file.name.toLowerCase().endsWith('.woff'));
+            let validFiles = files.filter(file => {
+                const name = file.name.toLowerCase();
+                return name.endsWith('.woff') || name.endsWith('.woff2');
+            });
             
             if (validFiles.length === 0) {
-                status.textContent = 'Please select WOFF files only.';
+                status.textContent = 'Please select WOFF or WOFF2 files only.';
                 return;
             }
 
@@ -162,7 +165,9 @@
                 
                 reader.onload = function(e) {
                     const base64 = e.target.result;
-                    const dataUrl = `data:application/font-woff;charset=utf-8;base64,${base64.split(',')[1]}`;
+                    const mimeType = file.name.toLowerCase().endsWith('.woff2') ? 
+                        'application/font-woff2' : 'application/font-woff';
+                    const dataUrl = `data:${mimeType};charset=utf-8;base64,${base64.split(',')[1]}`;
                     
                     // Create result item
                     const resultItem = document.createElement('div');
