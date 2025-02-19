@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WOFF to Base64 Converter</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .container {
+            border: 2px dashed #ccc;
+            padding: 2rem;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .container.dragover {
+            background: #f0f0f0;
+            border-color: #666;
+        }
+        #output {
+            width: 100%;
+            min-height: 100px;
+            margin-top: 1rem;
+            padding: 0.5rem;
+            word-break: break-all;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0.5rem;
+        }
+        button:hover {
+            background: #0052a3;
+        }
+        #status {
+            margin-top: 1rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>WOFF to Base64 Converter</h1>
+    <div id="dropZone" class="container">
+        <p>Drop WOFF file here or click to select</p>
+        <input type="file" id="fileInput" accept=".woff" style="display: none">
+        <button id="selectButton">Select WOFF File</button>
+    </div>
+    <div>
+        <button id="copyButton" style="display: none">Copy to Clipboard</button>
+    </div>
+    <div id="status"></div>
+    <textarea id="output" readonly placeholder="Base64 output will appear here"></textarea>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const selectButton = document.getElementById('selectButton');
+        const copyButton = document.getElementById('copyButton');
+        const output = document.getElementById('output');
+        const status = document.getElementById('status');
+
+        // Handle drag and drop events
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.add('dragover');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.remove('dragover');
+            });
+        });
+
+        // Handle file drop
+        dropZone.addEventListener('drop', handleDrop);
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const file = dt.files[0];
+            handleFile(file);
+        }
+
+        // Handle file selection via button
+        selectButton.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+            handleFile(e.target.files[0]);
+        });
+
+        // Process the file
+        function handleFile(file) {
+            if (!file) return;
+            
+            if (!file.name.toLowerCase().endsWith('.woff')) {
+                status.textContent = 'Please select a WOFF file.';
+                return;
+            }
+
+            status.textContent = 'Converting...';
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const base64 = e.target.result;
+                const dataUrl = `data:application/font-woff;charset=utf-8;base64,${base64.split(',')[1]}`;
+                output.value = dataUrl;
+                copyButton.style.display = 'inline-block';
+                status.textContent = 'Conversion complete!';
+            };
+
+            reader.onerror = function() {
+                status.textContent = 'Error reading file!';
+            };
+
+            reader.readAsDataURL(file);
+        }
+
+        // Copy to clipboard functionality
+        copyButton.addEventListener('click', () => {
+            output.select();
+            document.execCommand('copy');
+            status.textContent = 'Copied to clipboard!';
+            setTimeout(() => {
+                status.textContent = '';
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
