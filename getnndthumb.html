@@ -3,16 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <title>Redirecting...</title>
-    <script>
-        setTimeout(() => {
-            window.location.href = "https://utaitewiki-nndvideothumbnail.up.railway.app/";
-        }, 3000);
-    </script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        let countdown = 3;
+        function updateCountdown() {
+            const countdownElement = document.getElementById('countdown');
+            countdownElement.textContent = countdown;
+            countdownElement.classList.add('scale-150');
+            setTimeout(() => countdownElement.classList.remove('scale-150'), 300);
+            countdown--;
+            if (countdown < 0) {
+                window.location.href = "https://utaitewiki-nndvideothumbnail.up.railway.app/";
+            } else {
+                setTimeout(updateCountdown, 1000);
+            }
+        }
+        window.onload = updateCountdown;
+    </script>
 </head>
 <body class="flex items-center justify-center h-screen bg-gradient-to-br from-blue-500 to-purple-600 text-white text-center">
     <div>
-        <h1 class="text-4xl font-bold mb-4">Redirecting in 3 seconds...</h1>
+        <h1 class="text-4xl font-bold mb-4">Redirecting in <span id="countdown" class="transition-transform duration-300">3</span> seconds...</h1>
         <p class="text-lg">If you are not redirected, <a href="https://utaitewiki-nndvideothumbnail.up.railway.app/" class="underline font-semibold hover:text-yellow-300">click here</a>.</p>
     </div>
 </body>
