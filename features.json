@@ -42,19 +42,6 @@
       ]
     },
     {
-      "id": "getnndthumb",
-      "title": "Get NND Thumbnail",
-      "shortTitle": "Get NND Thumbnail",
-      "description": "Get Nicovideo's video thumbnail",
-      "status":"active",
-      "backgroundColor":"bg-indigo-600",
-      "url": "./getnndthumb.html",
-      "bullets":[
-        "Fast",
-        "Limited functionality"
-      ]
-    },
-    {
       "id": "coming-soon",
       "title": "Coming Soon",
       "shortTitle": "Coming Soon",
