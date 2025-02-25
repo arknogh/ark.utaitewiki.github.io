@@ -422,6 +422,9 @@
                     let singer = singerLine.replace(new RegExp(`\\|singer${i} = `), '').trim();
                     let description = '';
                     
+                    // Store original singer string before modifications
+                    const originalSinger = singer;
+                    
                     // Check for special template format with specific patterns
                     const isTemplate = singer.includes('{{') && singer.includes('}}');
                     
@@ -444,7 +447,7 @@
                         // Handle parenthetical content when not inside brackets
                         // Edge case: "[[Funi (Imouto)]]" should be kept as is
                         if (!hasPipeInBracket && !hasMultipleSingers) {
-                            // If we have brackets with parentheses inside, keep it intact
+                            // If we have brackets with parentheses inside, keep it intact but remove brackets
                             if (/\[\[.*\(.*\).*\]\]/.test(singer)) {
                                 // Just remove the outer brackets, keep the content as is
                                 singer = singer.replace(/^\[\[|\]\]$/g, '');
@@ -462,8 +465,15 @@
                                     description = (description + ' ' + parentContent).trim();
                                 }
                             }
-                        } else if (!hasMultipleSingers && !hasPipeInBracket) {
-                            // For simple cases with no special structures, just remove brackets
+                            // For simple cases like "[[SingerName]]", just remove the brackets
+                            else if (/^\[\[.*\]\]$/.test(singer)) {
+                                singer = singer.replace(/^\[\[|\]\]$/g, '');
+                            }
+                        } else if (hasMultipleSingers || hasPipeInBracket) {
+                            // For complex cases, keep the brackets intact
+                            // These will use customlink=true
+                        } else {
+                            // Catch any other cases with brackets that didn't match above conditions
                             singer = singer.replace(/\[\[|\]\]/g, '');
                         }
                     }
@@ -494,12 +504,13 @@
                         const albumName = cdParts.length > 1 ? cdParts[1].trim() : '';
                         
                         // Get the original singer name (without brackets for normal cases)
-                        let originalSinger = hasMultipleSingers || hasPipeInBracket ? 
+                        // Use the singer value after it has been cleaned
+                        let originalSingerForCD = hasMultipleSingers || hasPipeInBracket ? 
                             singer : singer.replace(/\[\[|\]\]/g, '');
                         
                         // If there's an album name, always store the original singer name as alias
                         if (albumName) {
-                            entry.alias = originalSinger;
+                            entry.alias = originalSingerForCD;
                             
                             // If there's content before the # (album type), remove customlink
                             // since we're replacing the original singer completely
@@ -519,7 +530,7 @@
                             
                             // Add singer + album name to description
                             // Use the content before # as singer name if it exists, otherwise use the original singer name
-                            const singerForDescription = cdPrefix ? cdPrefix : originalSinger;
+                            const singerForDescription = cdPrefix ? cdPrefix : originalSingerForCD;
                             const albumInfo = singerForDescription + " - " + albumName;
                             
                             description = description ? description + " (" + albumInfo + ")" : "(" + albumInfo + ")";
