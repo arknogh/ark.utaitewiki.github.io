@@ -61,71 +61,111 @@
      * @return {string} The new template format
      */
     function convertSongTemplate(oldTemplate) {
-      // Clean up the template to handle fields on the same line
-      const cleanTemplate = oldTemplate.replace(/\|/g, '\n|').replace(/\}\}/g, '\n}}');
-      
-      // Extract fields using regex
-      const imageRegex = /\|image\s*=\s*([^\n]+)/i;
-      const songtitleRegex = /\|songtitle\s*=\s*([^\n]+)/i;
-      const nndRegex = /\|nnd\s*=\s*([^\n]+)/i;
-      const ytRegex = /\|yt\s*=\s*([^\n]+)/i;
-      const bbRegex = /\|bb\s*=\s*([^\n]+)/i;
-      const mainRegex = /\|main\s*=\s*([^\n]+)/i;
-      const producerRegex = /\|producer\s*=\s*([\s\S]+?)(?=\n\}\}|\}\})/i;
-
-      // Extract values with fallback to empty string
-      let image = (imageRegex.exec(cleanTemplate) || [])[1] || '';
-      let songtitle = (songtitleRegex.exec(cleanTemplate) || [])[1] || '';
-      let nnd = (nndRegex.exec(cleanTemplate) || [])[1] || '';
-      let yt = (ytRegex.exec(cleanTemplate) || [])[1] || '';
-      let bb = (bbRegex.exec(cleanTemplate) || [])[1] || '';
-      let main = (mainRegex.exec(cleanTemplate) || [])[1] || '';
-      let producer = (producerRegex.exec(cleanTemplate) || [])[1] || '';
-
-      // Trim whitespace from all fields
-      image = image.trim();
-      songtitle = songtitle.trim();
-      nnd = nnd.trim();
-      yt = yt.trim();
-      bb = bb.trim();
-      main = main.trim();
-      producer = producer.trim();
-
-      // Remove hyphens from main field if they exist (for Vocal field)
-      main = main.replace(/^-/, '').replace(/-$/, '').trim();
-
-      // Generate the new template with proper field names
-      return `{{Coverlist}}{{TabberType2|
-tab1=Main|content1=
-{{#tag:tabber|
-Song Information=
-{{Utattemita
-|Title=${songtitle}
-|NND=${nnd}
-|YT=${yt}
-|BB=${bb}
-|Image=${image}
-|Vocal=${main}
-|Producers=${producer}
-}}
-{{!}}-{{!}}
-{{#ifexist: {{PAGENAME}}/Lyrics | {{!}}-{{!}}Lyrics= {{/Lyrics}}}}}}
-|tab2=Cover List|content2={{TabberType2
-|hide1={{#ifexist: {{PAGENAME}}/Male Utaite|false|true}}|tab1=Male Utaite|content1={{/Male Utaite}}
-|hide2={{#ifexist: {{PAGENAME}}/Male Utaite Groups|false|true}}|tab2=Male Utaite Groups|content2={{/Male Utaite Groups}}
-|hide3={{#ifexist: {{PAGENAME}}/Female Utaite|false|true}}|tab3=Female Utaite|content3={{/Female Utaite}}
-|hide4={{#ifexist: {{PAGENAME}}/Female Utaite Groups|false|true}}|tab4=Female Utaite Groups|content4={{/Female Utaite Groups}}
-|hide5={{#ifexist: {{PAGENAME}}/Androgynous Utaite|false|true}}|tab5=Androgynous Utaite|content5={{/Androgynous Utaite}}
-|hide6={{#ifexist: {{PAGENAME}}/Male Youtaite|false|true}}|tab6=Male Youtaite|content6={{/Male Youtaite}}
-|hide7={{#ifexist: {{PAGENAME}}/Male Youtaite Groups|false|true}}|tab7=Male Youtaite Groups|content7={{/Male Youtaite Groups}}
-|hide8={{#ifexist: {{PAGENAME}}/Female Youtaite|false|true}}|tab8=Female Youtaite|content8={{/Female Youtaite}}
-|hide9={{#ifexist: {{PAGENAME}}/Female Youtaite Groups|false|true}}|tab9=Female Youtaite Groups|content9={{/Female Youtaite Groups}}
-|hide10={{#ifexist: {{PAGENAME}}/Androgynous Youtaite|false|true}}|tab10=Androgynous Youtaite|content10={{/Androgynous Youtaite}}
-|hide11={{#ifexist: {{PAGENAME}}/Male Virtual Youtuber|false|true}}|tab11=Male Virtual Youtuber|content11={{/Male Virtual Youtuber}}
-|hide12={{#ifexist: {{PAGENAME}}/Female Virtual Youtuber|false|true}}|tab12=Female Virtual Youtuber|content12={{/Female Virtual Youtuber}}
-|hide13={{#ifexist: {{PAGENAME}}/Androgynous Virtual Youtuber|false|true}}|tab13=Androgynous Virtual Youtuber|content13={{/Androgynous Virtual Youtuber}}
-|hide14={{#ifexist: {{PAGENAME}}/Units|false|true}}|tab14=Units|content14={{/Units}}
-}}}}`;
+  // We'll use a state machine approach to parse the template
+  const fields = {
+    image: '',
+    songtitle: '',
+    nnd: '',
+    yt: '',
+    bb: '',
+    main: '',
+    producer: ''
+  };
+  
+  // Normalize line endings
+  const normalizedTemplate = oldTemplate.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  
+  // Tokenize the template, respecting nested templates
+  let tokens = [];
+  let currentToken = '';
+  let nestedLevel = 0;
+  
+  for (let i = 0; i < normalizedTemplate.length; i++) {
+    const char = normalizedTemplate[i];
+    const nextChar = normalizedTemplate[i + 1] || '';
+    
+    // Handle opening of templates
+    if (char === '{' && nextChar === '{') {
+      currentToken += '{{';
+      nestedLevel++;
+      i++; // Skip the next character
+    } 
+    // Handle closing of templates
+    else if (char === '}' && nextChar === '}') {
+      currentToken += '}}';
+      nestedLevel--;
+      i++; // Skip the next character
+    } 
+    // Only treat pipes as field separators if not in a nested template
+    else if (char === '|' && nestedLevel <= 1) {
+      if (currentToken.trim()) {
+        tokens.push(currentToken.trim());
+      }
+      currentToken = '';
+    } 
+    else {
+      currentToken += char;
+    }
+  }
+  
+  // Add the final token
+  if (currentToken.trim()) {
+    tokens.push(currentToken.trim());
+  }
+  
+  // Process tokens into fields
+  for (const token of tokens) {
+    // Skip the template name token
+    if (token.startsWith('{{Song')) continue;
+    if (token === '}}') continue;
+    
+    // Extract field name and value
+    const equalPos = token.indexOf('=');
+    if (equalPos === -1) continue;
+    
+    const fieldName = token.substring(0, equalPos).trim().toLowerCase();
+    const fieldValue = token.substring(equalPos + 1).trim();
+    
+    // Assign to our fields object
+    if (fieldName in fields) {
+      fields[fieldName] = fieldValue;
+    }
+  }
+  
+  // Remove hyphens from main field
+  fields.main = fields.main.replace(/^-/, '').replace(/-$/, '').trim();
+  
+  // Generate the new template
+  return `{{Coverlist}}{{TabberType2|
+      tab1=Main|content1=
+      {{#tag:tabber|
+      Song Information=
+      {{Utattemita
+      |Title=${fields.songtitle}
+      |NND=${fields.nnd}
+      |YT=${fields.yt}
+      |BB=${fields.bb}
+      |Image=${fields.image}
+      |Vocal=${fields.main}
+      |Producers=${fields.producer}
+      }}
+      {{!}}-{{!}}
+      {{#ifexist: {{PAGENAME}}/Lyrics | {{!}}-{{!}}Lyrics= {{/Lyrics}}}}}}|tab2=Cover List|content2={{TabberType2
+      |hide1={{#ifexist: {{PAGENAME}}/Male Utaite|false|true}}|tab1=Male Utaite|content1={{/Male Utaite}}
+      |hide2={{#ifexist: {{PAGENAME}}/Male Utaite Groups|false|true}}|tab2=Male Utaite Groups|content2={{/Male Utaite Groups}}
+      |hide3={{#ifexist: {{PAGENAME}}/Female Utaite|false|true}}|tab3=Female Utaite|content3={{/Female Utaite}}
+      |hide4={{#ifexist: {{PAGENAME}}/Female Utaite Groups|false|true}}|tab4=Female Utaite Groups|content4={{/Female Utaite Groups}}
+      |hide5={{#ifexist: {{PAGENAME}}/Androgynous Utaite|false|true}}|tab5=Androgynous Utaite|content5={{/Androgynous Utaite}}
+      |hide6={{#ifexist: {{PAGENAME}}/Male Youtaite|false|true}}|tab6=Male Youtaite|content6={{/Male Youtaite}}
+      |hide7={{#ifexist: {{PAGENAME}}/Male Youtaite Groups|false|true}}|tab7=Male Youtaite Groups|content7={{/Male Youtaite Groups}}
+      |hide8={{#ifexist: {{PAGENAME}}/Female Youtaite|false|true}}|tab8=Female Youtaite|content8={{/Female Youtaite}}
+      |hide9={{#ifexist: {{PAGENAME}}/Female Youtaite Groups|false|true}}|tab9=Female Youtaite Groups|content9={{/Female Youtaite Groups}}
+      |hide10={{#ifexist: {{PAGENAME}}/Androgynous Youtaite|false|true}}|tab10=Androgynous Youtaite|content10={{/Androgynous Youtaite}}
+      |hide11={{#ifexist: {{PAGENAME}}/Male Virtual Youtuber|false|true}}|tab11=Male Virtual Youtuber|content11={{/Male Virtual Youtuber}}
+      |hide12={{#ifexist: {{PAGENAME}}/Female Virtual Youtuber|false|true}}|tab12=Female Virtual Youtuber|content12={{/Female Virtual Youtuber}}
+      |hide13={{#ifexist: {{PAGENAME}}/Androgynous Virtual Youtuber|false|true}}|tab13=Androgynous Virtual Youtuber|content13={{/Androgynous Virtual Youtuber}}
+      |hide14={{#ifexist: {{PAGENAME}}/Units|false|true}}|tab14=Units|content14={{/Units}}
+      }}}}`;
     }
 
     // Add event listeners when the DOM is fully loaded
