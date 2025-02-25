@@ -424,7 +424,7 @@
                     let description = '';
                     
                     // Check for special template format with specific patterns
-                    const isVWTemplate = singer.includes('{VW|') && singer.includes('}}');
+                    const isVWTemplate = singer.includes('{{VW|') && singer.includes('}}');
                     const isSpecialTemplate = (singer.includes('{') && singer.includes('}')) || 
                                               (singer.includes('{{') && singer.includes('}}'));
                     
