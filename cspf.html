@@ -61,82 +61,130 @@
      * @return {string} The new template format
      */
     function convertSongTemplate(oldTemplate) {
-  // We'll use a state machine approach to parse the template
-  const fields = {
-    image: '',
-    songtitle: '',
-    nnd: '',
-    yt: '',
-    bb: '',
-    main: '',
-    producer: ''
-  };
-  
-  // Normalize line endings
-  const normalizedTemplate = oldTemplate.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-  
-  // Tokenize the template, respecting nested templates
-  let tokens = [];
-  let currentToken = '';
-  let nestedLevel = 0;
-  
-  for (let i = 0; i < normalizedTemplate.length; i++) {
-    const char = normalizedTemplate[i];
-    const nextChar = normalizedTemplate[i + 1] || '';
-    
-    // Handle opening of templates
-    if (char === '{' && nextChar === '{') {
-      currentToken += '{{';
-      nestedLevel++;
-      i++; // Skip the next character
-    } 
-    // Handle closing of templates
-    else if (char === '}' && nextChar === '}') {
-      currentToken += '}}';
-      nestedLevel--;
-      i++; // Skip the next character
-    } 
-    // Only treat pipes as field separators if not in a nested template
-    else if (char === '|' && nestedLevel <= 1) {
-      if (currentToken.trim()) {
-        tokens.push(currentToken.trim());
+      // We'll use a more robust state machine that tracks different types of brackets
+      const fields = {
+        image: '',
+        songtitle: '',
+        nnd: '',
+        yt: '',
+        bb: '',
+        main: '',
+        producer: ''
+      };
+      
+      // Normalize line endings
+      const normalizedTemplate = oldTemplate.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      
+      // Track different types of bracket nesting
+      let curlyBraceLevel = 0;
+      let squareBracketLevel = 0;
+      let inFieldName = true;
+      let currentFieldName = '';
+      let currentFieldValue = '';
+      
+      let i = 0;
+      // Skip the opening {{Song
+      while (i < normalizedTemplate.length && normalizedTemplate.substring(i, i+7) !== '{{Song') {
+        i++;
       }
-      currentToken = '';
-    } 
-    else {
-      currentToken += char;
-    }
-  }
-  
-  // Add the final token
-  if (currentToken.trim()) {
-    tokens.push(currentToken.trim());
-  }
-  
-  // Process tokens into fields
-  for (const token of tokens) {
-    // Skip the template name token
-    if (token.startsWith('{{Song')) continue;
-    if (token === '}}') continue;
-    
-    // Extract field name and value
-    const equalPos = token.indexOf('=');
-    if (equalPos === -1) continue;
-    
-    const fieldName = token.substring(0, equalPos).trim().toLowerCase();
-    const fieldValue = token.substring(equalPos + 1).trim();
-    
-    // Assign to our fields object
-    if (fieldName in fields) {
-      fields[fieldName] = fieldValue;
-    }
-  }
-  
-  // Remove hyphens from main field
-  fields.main = fields.main.replace(/^-/, '').replace(/-$/, '').trim();
-  
-  // Generate the new template
-  return `{{Coverlist}}{{TabberType2|
+      
+      // Move past {{Song
+      i += 7;
+      curlyBraceLevel = 1;
+      
+      while (i < normalizedTemplate.length) {
+        const char = normalizedTemplate[i];
+        const nextChar = normalizedTemplate[i + 1] || '';
+        
+        // Check for closing of main template
+        if (char === '}' && nextChar === '}' && curlyBraceLevel === 1 && squareBracketLevel === 0) {
+          // We're at the end, save the last field if needed
+          if (currentFieldName && currentFieldName in fields) {
+            fields[currentFieldName] = currentFieldValue.trim();
+          }
+          break;
+        }
+        
+        // Handle opening of templates
+        if (char === '{' && nextChar === '{') {
+          curlyBraceLevel++;
+          currentFieldValue += '{{';
+          i += 2;
+          continue;
+        }
+        
+        // Handle closing of templates
+        if (char === '}' && nextChar === '}') {
+          curlyBraceLevel--;
+          currentFieldValue += '}}';
+          i += 2;
+          continue;
+        }
+        
+        // Handle opening of square brackets
+        if (char === '[' && nextChar === '[') {
+          squareBracketLevel++;
+          currentFieldValue += '[[';
+          i += 2;
+          continue;
+        } else if (char === '[') {
+          squareBracketLevel++;
+          currentFieldValue += '[';
+          i++;
+          continue;
+        }
+        
+        // Handle closing of square brackets
+        if (char === ']' && nextChar === ']') {
+          squareBracketLevel--;
+          currentFieldValue += ']]';
+          i += 2;
+          continue;
+        } else if (char === ']') {
+          squareBracketLevel--;
+          currentFieldValue += ']';
+          i++;
+          continue;
+        }
+        
+        // Handle field separator pipe only when not in brackets
+        if (char === '|' && curlyBraceLevel === 1 && squareBracketLevel === 0) {
+          // Save current field if we have one
+          if (currentFieldName && currentFieldName in fields) {
+            fields[currentFieldName] = currentFieldValue.trim();
+          }
+          
+          // Reset for new field
+          currentFieldName = '';
+          currentFieldValue = '';
+          inFieldName = true;
+          i++;
+          continue;
+        }
+        
+        // Handle equal sign to separate field name and value
+        if (char === '=' && inFieldName && curlyBraceLevel === 1 && squareBracketLevel === 0) {
+          currentFieldName = currentFieldName.trim().toLowerCase();
+          inFieldName = false;
+          i++;
+          continue;
+        }
+        
+        // Add character to current part
+        if (inFieldName) {
+          currentFieldName += char;
+        } else {
+          currentFieldValue += char;
+        }
+        
+        i++;
+      }
+      
+      // Remove hyphens from main field
+      fields.main = fields.main.replace(/^-/, '').replace(/-$/, '').trim();
+      
+      // Generate the new template
+      return `{{Coverlist}}{{TabberType2|
 tab1=Main|content1=
 {{#tag:tabber|
 Song Information=
