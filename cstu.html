@@ -482,7 +482,8 @@
                         
                         // If there's an album name, always store the original singer name as alias
                         if (albumName) {
-                            entry.alias = singer;
+                            // Store the singer value as alias, but remove brackets from alias
+                            entry.alias = singer.replace(/\[\[|\]\]/g, '');
                         }
                         
                         // If there's content before the #, use that instead of singer
