@@ -412,7 +412,6 @@
                     const entry = {};
                     
                     // Find the relevant part of the block for this entry number
-                    // We'll extract the full line for each singer parameter
                     const singerLineRegex = new RegExp(`\\|singer${i} = .*?(?=\\n\\|[a-zA-Z]|\\n\\}\\}|$)`, 's');
                     const singerLineMatch = block.match(singerLineRegex);
                     
@@ -479,10 +478,13 @@
                         const cdPrefix = cdParts[0].trim();
                         const albumName = cdParts.length > 1 ? cdParts[1].trim() : '';
                         
+                        // Store the original singer name for later use
+                        const originalSinger = singer.replace(/\[\[|\]\]/g, '');
+                        
                         // If there's an album name, always store the original singer name as alias
                         if (albumName) {
                             // Remove brackets from alias
-                            entry.alias = singer.replace(/\[\[|\]\]/g, '');
+                            entry.alias = originalSinger;
                             
                             // If there's content before the # (album type), remove customlink
                             // since we're replacing the original singer completely
@@ -499,6 +501,13 @@
                         // Append album name if it exists
                         if (albumName) {
                             singer = singer + '#' + albumName;
+                            
+                            // Add singer + album name to description
+                            // Use the content before # as singer name if it exists, otherwise use the original singer name
+                            const singerForDescription = cdPrefix ? cdPrefix : originalSinger;
+                            const albumInfo = singerForDescription + " - " + albumName;
+                            
+                            description = description ? description + " (" + albumInfo + ")" : "(" + albumInfo + ")";
                         }
                     }
                     
