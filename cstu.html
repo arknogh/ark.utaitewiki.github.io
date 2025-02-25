@@ -347,7 +347,7 @@
                 document.documentElement.classList.remove('dark');
             }
         }
-
+    
         // Toggle theme
         function toggleTheme() {
             if (document.documentElement.classList.contains('dark')) {
@@ -358,7 +358,7 @@
                 localStorage.setItem('theme', 'dark');
             }
         }
-
+    
         // Show toast notification
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
@@ -385,7 +385,7 @@
                 toast.querySelector('div').classList.remove('toast-animate');
             }, 3000);
         }
-
+    
         function formatExternalLink(type, id) {
             switch(type) {
                 case 'sc':
@@ -402,7 +402,7 @@
                     return '';
             }
         }
-
+    
         function parseOldFormat(text) {
             const blocks = text.split('{{Song covers').filter(block => block.trim());
             const entries = [];
@@ -424,15 +424,13 @@
                     let description = '';
                     
                     // Check for special template format with specific patterns
-                    const isVWTemplate = singer.includes('{{VW|') && singer.includes('}}');
-                    const isSpecialTemplate = (singer.includes('{') && singer.includes('}')) || 
-                                              (singer.includes('{{') && singer.includes('}}'));
+                    const isTemplate = singer.includes('{{') && singer.includes('}}');
                     
                     // Check if it's a multi-singer entry
                     const hasMultipleSingers = singer.includes(' x ');
                     
                     // Only process <br> and parentheses if not a special template
-                    if (!isSpecialTemplate) {
+                    if (!isTemplate) {
                         // Handle <br> content
                         if (singer.includes('<br>')) {
                             const [baseSinger, brContent] = singer.split('<br>');
@@ -447,8 +445,18 @@
                             description = (description + ' ' + parentContent.replace(')', '')).trim();
                         }
                         
-                        // Remove brackets only for normal singer names, not for special templates
-                        singer = singer.replace(/\[\[|\]\]/g, '');
+                        // Store original format before potentially removing brackets
+                        const originalSinger = singer;
+                        
+                        // Remove brackets only if not a multi-singer entry
+                        if (!hasMultipleSingers) {
+                            singer = singer.replace(/\[\[|\]\]/g, '');
+                        }
+                    }
+                    
+                    // Add customlink if it's a multi-singer entry or template
+                    if (hasMultipleSingers || isTemplate) {
+                        entry.customlink = 'true';
                     }
                     
                     // Handle CD and various platform links
@@ -486,11 +494,6 @@
                         if (albumName) {
                             singer = singer + '#' + albumName;
                         }
-                    }
-                    
-                    // Only add customlink if it's a multi-singer entry
-                    if (hasMultipleSingers) {
-                        entry.customlink = 'true';
                     }
                     
                     // Add platform links to description (except BB)
@@ -550,7 +553,7 @@
             output += '}}';
             return output;
         }
-
+    
         function convert() {
             const input = document.getElementById('input');
             const output = document.getElementById('output');
@@ -671,34 +674,34 @@
         
         function loadExample() {
             document.getElementById('input').value = `{{Song covers
-|singer1 = [[Shoose]] (with chorus)
-|yt1 = Dk3zmrPhUBM
-|nnd1 = sm28677959
-|cd1 = #Night Wander
-|sc1 = 283792
-
-|singer2 = [[Araki]]
-|yt2 = DYTXoU_h8qI
-|nnd2 = sm28760033
-
-|singer3 = [[Amatsuki]] x [[Itou Kashitarou]]
-|yt3 = BvEpAn04NZ0
-|nnd3 = sm28799307
-|bb3 = BV1eW41178iM
-|koe3 = 459981
-
-|singer4 = Okurine Lu
-|yt4 = sO3x8JEgE-g
-|tm4 = 261387
-|box4 = qwer1234asdf
-}}
-
-{{Song covers
-|singer1 = [[LowFat]] x [[Onyu]]
-|yt1 = KG_TSjcNi_8
-|nnd1 = sm28756829
-|cd1 = EXIT TUNES Albums#Ikemen Voice Paradise 7
-}}`;
+    |singer1 = [[Shoose]] (with chorus)
+    |yt1 = Dk3zmrPhUBM
+    |nnd1 = sm28677959
+    |cd1 = #Night Wander
+    |sc1 = 283792
+    
+    |singer2 = [[Araki]]
+    |yt2 = DYTXoU_h8qI
+    |nnd2 = sm28760033
+    
+    |singer3 = [[Amatsuki]] x [[Itou Kashitarou]]
+    |yt3 = BvEpAn04NZ0
+    |nnd3 = sm28799307
+    |bb3 = BV1eW41178iM
+    |koe3 = 459981
+    
+    |singer4 = Okurine Lu
+    |yt4 = sO3x8JEgE-g
+    |tm4 = 261387
+    |box4 = qwer1234asdf
+    }}
+    
+    {{Song covers
+    |singer1 = [[LowFat]] x [[Onyu]]
+    |yt1 = KG_TSjcNi_8
+    |nnd1 = sm28756829
+    |cd1 = EXIT TUNES Albums#Ikemen Voice Paradise 7
+    }}`;
             
             // Clear output when loading example
             clearOutput();
