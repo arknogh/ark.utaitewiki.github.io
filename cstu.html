@@ -5,67 +5,387 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Template Converter</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                            950: '#082f49',
+                        },
+                        secondary: {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            200: '#fed7aa',
+                            300: '#fdba74',
+                            400: '#fb923c',
+                            500: '#f97316',
+                            600: '#ea580c',
+                            700: '#c2410c',
+                            800: '#9a3412',
+                            900: '#7c2d12',
+                            950: '#431407',
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+        
+        /* Custom scrollbar styles */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        .dark ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        .dark ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        
+        .dark ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        
+        /* Toast animation */
+        @keyframes slideUp {
+            0% { transform: translateY(100%); opacity: 0; }
+            10% { transform: translateY(0); opacity: 1; }
+            90% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(100%); opacity: 0; }
+        }
+        
+        .toast-animate {
+            animation: slideUp 3s ease-in-out forwards;
+        }
+        
+        /* Blinking cursor for empty fields */
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        .cursor-blink::after {
+            content: '|';
+            opacity: 1;
+            animation: blink 1s infinite;
+            margin-left: 2px;
+        }
+    </style>
 </head>
-<body class="bg-gray-50 min-h-screen font-sans">
-    <div class="container mx-auto px-4 py-8 max-w-6xl">
-        <header class="mb-8">
-            <h1 class="text-3xl font-bold text-center text-gray-800">Template Converter</h1>
-            <p class="text-center text-gray-600 mt-2">Convert old format templates to the new format</p>
-        </header>
-        
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
-            <div class="p-4 bg-blue-50 border-b border-blue-100">
-                <h2 class="text-lg font-medium text-blue-800">How to use</h2>
-            </div>
-            <div class="p-4 text-gray-700">
-                <ol class="list-decimal pl-5 space-y-2">
-                    <li>Paste your old format template in the left box</li>
-                    <li>Click "Convert Template" to generate the new format</li>
-                    <li>Copy the result from the right box</li>
-                </ol>
-            </div>
+<body class="font-sans antialiased bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-300 min-h-screen">
+    <!-- Toast notification -->
+    <div id="toast" class="fixed bottom-4 right-4 z-50 hidden">
+        <div class="bg-green-500 dark:bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            </svg>
+            <span id="toastMessage">Operation successful</span>
         </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <label for="input" class="block text-sm font-medium text-gray-700 mb-2">Old Format:</label>
-                <textarea id="input" placeholder="Paste old format here..." class="w-full h-80 p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-mono"></textarea>
+    </div>
+
+    <header class="py-6 bg-white dark:bg-slate-800 shadow-sm mb-8">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold bg-gradient-to-r from-primary-600 to-secondary-500 text-transparent bg-clip-text">Template Converter</h1>
+                <p class="text-slate-600 dark:text-slate-400">Convert old format templates to the new format</p>
             </div>
             
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="flex justify-between mb-2">
-                    <label for="output" class="block text-sm font-medium text-gray-700">New Format:</label>
-                    <button onclick="copyOutput()" class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded transition-colors" id="copyBtn">
-                        Copy
-                    </button>
+            <button id="themeToggle" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                <!-- Sun icon for dark mode -->
+                <svg id="sunIcon" class="w-6 h-6 text-amber-500 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                </svg>
+                <!-- Moon icon for light mode -->
+                <svg id="moonIcon" class="w-6 h-6 text-slate-700 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 pb-16 max-w-6xl">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+            <!-- Instructions -->
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md overflow-hidden lg:col-span-3">
+                <div class="p-5 bg-gradient-to-r from-primary-600 to-primary-700 dark:from-primary-800 dark:to-primary-900">
+                    <h2 class="text-xl font-semibold text-white flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        How to Use This Tool
+                    </h2>
                 </div>
-                <textarea id="output" readonly placeholder="Converted template will appear here..." class="w-full h-80 p-3 border border-gray-300 rounded-md bg-gray-50 text-sm font-mono"></textarea>
+                
+                <div class="p-6 flex flex-col md:flex-row gap-6">
+                    <div class="flex-1">
+                        <h3 class="font-medium text-lg mb-3 text-primary-700 dark:text-primary-400">Basic Steps</h3>
+                        <ol class="list-decimal list-inside space-y-2 text-slate-700 dark:text-slate-300">
+                            <li>Paste your old format template in the left box</li>
+                            <li>Click "Convert Template" to generate the new format</li>
+                            <li>Copy the result from the right box</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="flex-1">
+                        <h3 class="font-medium text-lg mb-3 text-primary-700 dark:text-primary-400">CD Field Handling</h3>
+                        <ul class="list-disc list-inside space-y-2 text-slate-700 dark:text-slate-300">
+                            <li>If content exists before # in CD field (e.g., <code class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-xs">EXIT TUNES Albums#Ikemen Voice Paradise 7</code>), that value replaces the singer</li>
+                            <li>If no content before # (e.g., <code class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-xs">#Hakozume Clover</code>), original singer value is kept</li>
+                            <li>Album name (after #) is always appended to the singer value</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="flex-1">
+                        <h3 class="font-medium text-lg mb-3 text-primary-700 dark:text-primary-400">Keyboard Shortcuts</h3>
+                        <ul class="list-disc list-inside space-y-2 text-slate-700 dark:text-slate-300">
+                            <li><kbd class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-xs">Ctrl</kbd> + <kbd class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-xs">Enter</kbd> Convert template</li>
+                            <li><kbd class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-xs">Ctrl</kbd> + <kbd class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-xs">Alt</kbd> + <kbd class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-xs">C</kbd> Copy output</li>
+                            <li><kbd class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-xs">Esc</kbd> Clear fields</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Input Box -->
+            <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md overflow-hidden">
+                    <div class="px-4 py-3 bg-gradient-to-r from-primary-500 to-primary-600 dark:from-primary-700 dark:to-primary-800 flex justify-between items-center">
+                        <h2 class="text-lg font-semibold text-white flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            Old Format Template
+                        </h2>
+                        <button id="clearInput" class="text-white/80 hover:text-white text-sm flex items-center transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Clear
+                        </button>
+                    </div>
+                    
+                    <div class="p-4">
+                        <textarea id="input" placeholder="Paste old format here..." class="w-full h-80 p-4 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent text-sm font-mono bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 transition-colors resize-none"></textarea>
+                    </div>
+                    
+                    <div class="px-4 pb-4">
+                        <button id="useExampleBtn" class="w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-sm font-medium rounded transition-colors flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                            </svg>
+                            Load Example Template
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Output Box -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md overflow-hidden">
+                    <div class="px-4 py-3 bg-gradient-to-r from-secondary-500 to-secondary-600 dark:from-secondary-700 dark:to-secondary-800 flex justify-between items-center">
+                        <h2 class="text-lg font-semibold text-white flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            New Format Template
+                        </h2>
+                        
+                        <button id="copyBtn" class="text-white/80 hover:text-white text-sm flex items-center transition-colors" disabled>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            Copy
+                        </button>
+                    </div>
+                    
+                    <div class="p-4">
+                        <div class="relative">
+                            <textarea id="output" readonly placeholder="Converted template will appear here..." class="w-full h-80 p-4 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-750 text-sm font-mono text-slate-900 dark:text-slate-100 transition-colors resize-none"></textarea>
+                            
+                            <div id="emptyState" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-50/90 dark:bg-slate-800/90 backdrop-blur-sm rounded-lg cursor-default">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-slate-300 dark:text-slate-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                                <p class="text-slate-500 dark:text-slate-400 font-medium text-center px-6">Your converted template will appear here</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="outputStats" class="hidden px-4 pb-4 text-xs text-slate-500 dark:text-slate-400">
+                        <div class="flex justify-between">
+                            <span>Entries found: <span id="entryCount" class="font-medium text-primary-600 dark:text-primary-400">0</span></span>
+                            <span>Conversion completed in <span id="conversionTime" class="font-medium text-primary-600 dark:text-primary-400">0ms</span></span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         
-        <div class="mt-6 flex justify-center">
-            <button onclick="convert()" id="convertBtn" class="px-6 py-3 bg-blue-600 text-white font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                Convert Template
+        <div class="flex justify-center mb-8">
+            <button id="convertBtn" class="group relative px-8 py-4 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white font-medium rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200 flex items-center space-x-3">
+                <span>Convert Template</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
             </button>
         </div>
         
-        <div id="errorMessage" class="mt-4 bg-red-50 text-red-700 p-3 rounded-md hidden"></div>
-        
-        <div class="mt-8 bg-yellow-50 border border-yellow-100 rounded-lg p-4 text-yellow-800 text-sm">
-            <h3 class="font-medium">CD Field Handling:</h3>
-            <ul class="list-disc pl-5 mt-2 space-y-1">
-                <li>If content exists before # in CD field (e.g., <code>EXIT TUNES Albums#Ikemen Voice Paradise 7</code>), that value replaces the singer</li>
-                <li>If no content before # (e.g., <code>#Hakozume Clover</code>), original singer value is kept</li>
-                <li>Album name (after #) is always appended to the singer value</li>
-            </ul>
+        <div id="errorMessage" class="hidden mb-8 bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 p-4 rounded-lg flex items-start">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div id="errorMessageText"></div>
         </div>
         
-        <footer class="mt-12 text-center text-gray-500 text-sm">
+        <!-- Format details box -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md overflow-hidden">
+                <div class="px-4 py-3 bg-gradient-to-r from-primary-500 to-primary-600 dark:from-primary-700 dark:to-primary-800">
+                    <h2 class="text-lg font-semibold text-white flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                        </svg>
+                        Old Format Structure
+                    </h2>
+                </div>
+                
+                <div class="p-4">
+                    <div class="bg-slate-100 dark:bg-slate-700 rounded-lg p-4 font-mono text-xs overflow-x-auto">
+<pre>{{Song covers
+|singer1 = [[SingerName]] (optional description)
+|yt1 = YouTubeID
+|nnd1 = NicoNicoID
+|cd1 = AlbumType#AlbumName
+|sc1 = SoundCloudID
+|bb1 = BilibiliID
+|koe1 = KoebuID
+|tm1 = TmBoxID
+|box1 = BoxID
+
+|singer2 = ...
+}}</pre>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md overflow-hidden">
+                <div class="px-4 py-3 bg-gradient-to-r from-secondary-500 to-secondary-600 dark:from-secondary-700 dark:to-secondary-800">
+                    <h2 class="text-lg font-semibold text-white flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                        </svg>
+                        New Format Structure
+                    </h2>
+                </div>
+                
+                <div class="p-4">
+                    <div class="bg-slate-100 dark:bg-slate-700 rounded-lg p-4 font-mono text-xs overflow-x-auto">
+<pre>{{NOUT
+|entries={{NUTE
+|singer=SingerName
+|description=Optional description
+|YT=YouTubeID
+|NND=NicoNicoID
+|BB=BilibiliID
+|image=imagename.png
+}}{{NUTE
+|singer=...
+}}
+}}</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer class="mt-16 text-center text-slate-500 dark:text-slate-400 text-sm border-t border-slate-200 dark:border-slate-700 pt-8">
             <p>Template conversion tool for song cover entries</p>
+            <p class="mt-2 text-xs">Theme preference is saved between visits</p>
         </footer>
     </div>
 
     <script>
+        // Initialize theme
+        function initTheme() {
+            if (localStorage.getItem('theme') === 'dark' || 
+                (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        // Toggle theme
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            // Set message and color based on type
+            toastMessage.textContent = message;
+            
+            if (type === 'error') {
+                toast.querySelector('div').classList.remove('bg-green-500', 'dark:bg-green-600');
+                toast.querySelector('div').classList.add('bg-red-500', 'dark:bg-red-600');
+            } else {
+                toast.querySelector('div').classList.remove('bg-red-500', 'dark:bg-red-600');
+                toast.querySelector('div').classList.add('bg-green-500', 'dark:bg-green-600');
+            }
+            
+            // Show and animate
+            toast.classList.remove('hidden');
+            toast.querySelector('div').classList.add('toast-animate');
+            
+            // Hide after animation
+            setTimeout(() => {
+                toast.classList.add('hidden');
+                toast.querySelector('div').classList.remove('toast-animate');
+            }, 3000);
+        }
+
         function formatExternalLink(type, id) {
             switch(type) {
                 case 'sc':
@@ -211,18 +531,32 @@
             const input = document.getElementById('input');
             const output = document.getElementById('output');
             const errorMessage = document.getElementById('errorMessage');
+            const errorMessageText = document.getElementById('errorMessageText');
             const convertBtn = document.getElementById('convertBtn');
+            const emptyState = document.getElementById('emptyState');
+            const outputStats = document.getElementById('outputStats');
+            const entryCount = document.getElementById('entryCount');
+            const conversionTime = document.getElementById('conversionTime');
+            const copyBtn = document.getElementById('copyBtn');
             
-            // Hide any previous error
+            // Reset UI states
             errorMessage.classList.add('hidden');
             
-            // Disable button and show loading state
+            // Show loading state
+            const originalBtnText = convertBtn.innerHTML;
             convertBtn.disabled = true;
-            convertBtn.innerText = 'Converting...';
-            convertBtn.classList.add('bg-blue-400');
-            convertBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            convertBtn.innerHTML = `
+                <svg class="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Converting...</span>
+            `;
             
+            // Simulate a brief delay for better UX
             setTimeout(() => {
+                const startTime = performance.now();
+                
                 try {
                     if (!input.value.trim()) {
                         throw new Error('Please paste old format template first');
@@ -231,29 +565,48 @@
                     const entries = parseOldFormat(input.value);
                     
                     if (entries.length === 0) {
-                        throw new Error('No valid entries found in the input');
+                        throw new Error('No valid entries found in the input. Make sure to use the correct old format with at least one singer field.');
                     }
                     
                     output.value = formatNewTemplate(entries);
                     
-                    // Flash success indicator
-                    output.classList.add('bg-green-50', 'border-green-200');
+                    // Update stats
+                    entryCount.textContent = entries.length;
+                    const endTime = performance.now();
+                    conversionTime.textContent = `${Math.round(endTime - startTime)}ms`;
+                    outputStats.classList.remove('hidden');
+                    
+                    // Enable copy button
+                    copyBtn.disabled = false;
+                    
+                    // Hide empty state
+                    emptyState.classList.add('hidden');
+                    
+                    // Show success message
+                    showToast(`Successfully converted ${entries.length} entries!`);
+                    
+                    // Flash effect on output
+                    output.classList.add('ring-2', 'ring-green-400', 'dark:ring-green-700');
                     setTimeout(() => {
-                        output.classList.remove('bg-green-50', 'border-green-200');
+                        output.classList.remove('ring-2', 'ring-green-400', 'dark:ring-green-700');
                     }, 1000);
                     
                 } catch (error) {
                     output.value = '';
-                    errorMessage.textContent = 'Error: ' + error.message;
+                    errorMessageText.textContent = error.message;
                     errorMessage.classList.remove('hidden');
+                    emptyState.classList.remove('hidden');
+                    outputStats.classList.add('hidden');
+                    copyBtn.disabled = true;
+                    
+                    // Show error toast
+                    showToast(error.message, 'error');
                 } finally {
                     // Restore button state
                     convertBtn.disabled = false;
-                    convertBtn.innerText = 'Convert Template';
-                    convertBtn.classList.remove('bg-blue-400');
-                    convertBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                    convertBtn.innerHTML = originalBtnText;
                 }
-            }, 300); // Small delay to show loading state
+            }, 400);
         }
         
         function copyOutput() {
@@ -262,19 +615,125 @@
             
             if (!output.value) return;
             
+            // Copy to clipboard
             output.select();
-            document.execCommand('copy');
             
-            // Change button text temporarily
-            const originalText = copyBtn.innerText;
-            copyBtn.innerText = 'Copied!';
-            copyBtn.classList.add('bg-green-100', 'text-green-700');
-            
-            setTimeout(() => {
-                copyBtn.innerText = originalText;
-                copyBtn.classList.remove('bg-green-100', 'text-green-700');
-            }, 1500);
+            try {
+                document.execCommand('copy');
+                showToast('Copied to clipboard!');
+            } catch (err) {
+                // Fallback to modern clipboard API
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(output.value)
+                        .then(() => showToast('Copied to clipboard!'))
+                        .catch(() => showToast('Failed to copy. Please try manually.', 'error'));
+                } else {
+                    showToast('Failed to copy. Please try manually.', 'error');
+                }
+            }
         }
+        
+        function clearInput() {
+            document.getElementById('input').value = '';
+            document.getElementById('input').focus();
+        }
+        
+        function clearOutput() {
+            document.getElementById('output').value = '';
+            document.getElementById('emptyState').classList.remove('hidden');
+            document.getElementById('outputStats').classList.add('hidden');
+            document.getElementById('copyBtn').disabled = true;
+        }
+        
+        function loadExample() {
+            document.getElementById('input').value = `{{Song covers
+|singer1 = [[Shoose]] (with chorus)
+|yt1 = Dk3zmrPhUBM
+|nnd1 = sm28677959
+|cd1 = #EXIT TUNES PRESENTS Yumemiru! vol.1
+|sc1 = 283792
+
+|singer2 = [[Araki]]
+|yt2 = DYTXoU_h8qI
+|nnd2 = sm28760033
+
+|singer3 = [[Amatsuki]] x [[Itou Kashitarou]]
+|yt3 = BvEpAn04NZ0
+|nnd3 = sm28799307
+|bb3 = BV1eW41178iM
+|koe3 = 459981
+
+|singer4 = Okurine Lu
+|yt4 = sO3x8JEgE-g
+|tm4 = 261387
+|box4 = qwer1234asdf
+}}
+
+{{Song covers
+|singer1 = [[LowFat]] x [[Onyu]]
+|yt1 = KG_TSjcNi_8
+|nnd1 = sm28756829
+|cd1 = EXIT TUNES Albums#Ikemen Voice Paradise 7
+}}`;
+            
+            // Clear output when loading example
+            clearOutput();
+        }
+        
+        // Add event handlers after DOM load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize theme
+            initTheme();
+            
+            // Button event listeners
+            document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+            document.getElementById('convertBtn').addEventListener('click', convert);
+            document.getElementById('copyBtn').addEventListener('click', copyOutput);
+            document.getElementById('clearInput').addEventListener('click', clearInput);
+            document.getElementById('useExampleBtn').addEventListener('click', loadExample);
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // Ctrl+Enter to convert
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    convert();
+                }
+                
+                // Ctrl+Alt+C to copy
+                if ((e.ctrlKey || e.metaKey) && e.altKey && e.key === 'c') {
+                    if (!document.getElementById('copyBtn').disabled) {
+                        copyOutput();
+                    }
+                }
+                
+                // Escape to clear both input and output
+                if (e.key === 'Escape') {
+                    clearInput();
+                    clearOutput();
+                }
+            });
+            
+            // Check for filled textarea and update UI accordingly
+            const outputTextarea = document.getElementById('output');
+            if (outputTextarea.value.trim()) {
+                document.getElementById('emptyState').classList.add('hidden');
+                document.getElementById('copyBtn').disabled = false;
+            }
+            
+            // Add cursor blink effect to empty textareas
+            const inputTextarea = document.getElementById('input');
+            if (!inputTextarea.value) {
+                inputTextarea.classList.add('cursor-blink');
+            }
+            
+            inputTextarea.addEventListener('input', function() {
+                if (this.value) {
+                    this.classList.remove('cursor-blink');
+                } else {
+                    this.classList.add('cursor-blink');
+                }
+            });
+        });
     </script>
 </body>
 </html>
