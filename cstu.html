@@ -418,6 +418,9 @@
                     let singer = singerMatch[1].trim();
                     let description = '';
                     
+                    // Check if it's a multi-singer entry (before removing brackets)
+                    const hasMultipleSingers = singer.includes(' x ');
+                    
                     // Handle <br> content
                     if (singer.includes('<br>')) {
                         const [baseSinger, brContent] = singer.split('<br>');
@@ -444,7 +447,7 @@
                     const boxMatch = block.match(new RegExp(`box${i} = ([^\\n|]+)`));
                     
                     // First, remove brackets from singer
-                    singer = singer.replace(/\[\[|\]\]/g, '');
+                    singer = originalSinger;
                     
                     // Updated CD handling
                     if (cdMatch) {
@@ -460,11 +463,22 @@
                         // If there's content before the #, use that instead of singer
                         if (cdPrefix) {
                             singer = cdPrefix;
+                            
+                            // Only add customlink if multi-singer and NO prefix in CD
+                            // (because otherwise the singer field no longer contains multiple singers)
+                            if (hasMultipleSingers) {
+                                entry.customlink = 'true';
+                            }
                         }
                         
                         // Append album name if it exists
                         if (albumName) {
                             singer = singer + '#' + albumName;
+                        }
+                    } else {
+                        // Only add customlink if multi-singer and original format is kept
+                        if (hasMultipleSingers) {
+                            entry.customlink = 'true';
                         }
                     }
                     
@@ -489,13 +503,6 @@
                     
                     if (links.length > 0) {
                         description = description ? `${description} ${links.join(' ')}` : links.join(' ');
-                    }
-                    
-                    // Check if it's a multi-singer entry
-                    const hasMultipleSingers = originalSinger.includes(' x ');
-                    if (hasMultipleSingers) {
-                        // Use customlink=true instead of singernolink=y
-                        entry.customlink = 'true';
                     }
                     
                     entry.singer = singer;
