@@ -438,7 +438,7 @@
                     // Store the original singer value WITH brackets
                     let originalSingerWithBrackets = singer;
                     
-                    // Store clean original singer value (removing brackets) only for CD processing
+                    // Store clean original singer value (removing brackets) for CD processing and aliases
                     let originalSingerNoBrackets = singer.replace(/\[\[|\]\]/g, '');
                     
                     // Handle CD and various platform links
@@ -449,25 +449,30 @@
                     const koebuMatch = block.match(new RegExp(`koe${i} = ([^\\n|]+)`));
                     const boxMatch = block.match(new RegExp(`box${i} = ([^\\n|]+)`));
                     
-                    // Updated CD handling
+                    // Updated CD handling with fixed album logic
                     if (cdMatch) {
                         const cdParts = cdMatch[1].split('#');
                         const cdPrefix = cdParts[0].trim();
                         const albumName = cdParts.length > 1 ? cdParts[1].trim() : '';
                         
+                        // If there's an album name, always store the original singer name as alias (without brackets)
+                        if (albumName) {
+                            entry.alias = originalSingerNoBrackets;
+                        }
+                        
                         // If there's content before the #, use that instead of singer
                         if (cdPrefix) {
-                            // Always store original singer as alias if there's content before #
-                            entry.alias = originalSingerNoBrackets;
                             singer = cdPrefix;
                             
-                            // Now singer is no longer in original format, so no customlink needed
-                            // regardless of whether it was a multi-singer entry originally
+                            // If both prefix and multi-singer, add customlink
+                            if (hasMultipleSingers) {
+                                entry.customlink = 'true';
+                            }
                         } else {
-                            // No prefix, keep original singer format WITH brackets
-                            singer = originalSingerWithBrackets;
+                            // No prefix, use original singer WITHOUT brackets for album concatenation
+                            singer = originalSingerNoBrackets;
                             
-                            // Only add customlink if it's multi-singer
+                            // Only add customlink if it's multi-singer with no prefix
                             if (hasMultipleSingers) {
                                 entry.customlink = 'true';
                             }
