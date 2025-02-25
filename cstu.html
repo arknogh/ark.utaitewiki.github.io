@@ -474,7 +474,6 @@
                     const koebuMatch = block.match(new RegExp(`\\|koe${i} = ([^\\n|]*)`));
                     const boxMatch = block.match(new RegExp(`\\|box${i} = ([^\\n|]*)`));
                     
-                    // Updated CD handling
                     if (cdContent) {
                         const cdParts = cdContent.split('#');
                         const cdPrefix = cdParts[0].trim();
@@ -482,8 +481,14 @@
                         
                         // If there's an album name, always store the original singer name as alias
                         if (albumName) {
-                            // Store the singer value as alias, but remove brackets from alias
+                            // Remove brackets from alias
                             entry.alias = singer.replace(/\[\[|\]\]/g, '');
+                            
+                            // If there's content before the # (album type), remove customlink
+                            // since we're replacing the original singer completely
+                            if (cdPrefix) {
+                                delete entry.customlink;
+                            }
                         }
                         
                         // If there's content before the #, use that instead of singer
