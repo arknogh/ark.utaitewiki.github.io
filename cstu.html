@@ -411,17 +411,20 @@
                 for (let i = 1; i <= 5; i++) {
                     const entry = {};
                     
-                    // More careful extraction of singer that preserves special templates
-                    // Look for the singer pattern but capture until the end of the line or until a newline
-                    const singerRegex = new RegExp(`\\|singer${i} = (.*?)(?=\\|[a-zA-Z]+${i} =|\\}\\}|$)`, 's');
-                    const singerMatch = block.match(singerRegex);
+                    // Find the relevant part of the block for this entry number
+                    // We'll extract the full line for each singer parameter
+                    const singerLineRegex = new RegExp(`\\|singer${i} = .*?(?=\\n\\|[a-zA-Z]|\\n\\}\\}|$)`, 's');
+                    const singerLineMatch = block.match(singerLineRegex);
                     
-                    if (!singerMatch) continue;
+                    if (!singerLineMatch) continue;
                     
-                    let singer = singerMatch[1].trim();
+                    // Get the actual singer value by removing the parameter name
+                    let singerLine = singerLineMatch[0];
+                    let singer = singerLine.replace(new RegExp(`\\|singer${i} = `), '').trim();
                     let description = '';
                     
-                    // Check for special template format - if present, don't process internal content
+                    // Check for special template format with specific patterns
+                    const isVWTemplate = singer.includes('{VW|') && singer.includes('}}');
                     const isSpecialTemplate = (singer.includes('{') && singer.includes('}')) || 
                                               (singer.includes('{{') && singer.includes('}}'));
                     
@@ -449,8 +452,13 @@
                     }
                     
                     // Handle CD and various platform links
-                    const cdRegex = new RegExp(`\\|cd${i} = (.*?)(?=\\|[a-zA-Z]+${i} =|\\}\\}|$)`, 's');
-                    const cdMatch = block.match(cdRegex);
+                    const cdLineRegex = new RegExp(`\\|cd${i} = .*?(?=\\n\\|[a-zA-Z]|\\n\\}\\}|$)`, 's');
+                    const cdLineMatch = block.match(cdLineRegex);
+                    let cdContent = '';
+                    
+                    if (cdLineMatch) {
+                        cdContent = cdLineMatch[0].replace(new RegExp(`\\|cd${i} = `), '').trim();
+                    }
                     
                     const tmMatch = block.match(new RegExp(`\\|tm${i} = ([^\\n|]*)`));
                     const scMatch = block.match(new RegExp(`\\|sc${i} = ([^\\n|]*)`));
@@ -459,8 +467,7 @@
                     const boxMatch = block.match(new RegExp(`\\|box${i} = ([^\\n|]*)`));
                     
                     // Updated CD handling
-                    if (cdMatch) {
-                        const cdContent = cdMatch[1].trim();
+                    if (cdContent) {
                         const cdParts = cdContent.split('#');
                         const cdPrefix = cdParts[0].trim();
                         const albumName = cdParts.length > 1 ? cdParts[1].trim() : '';
