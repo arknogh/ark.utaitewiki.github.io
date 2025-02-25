@@ -403,7 +403,7 @@
             }
         }
     
-        function parseOldFormat(text) {
+       function parseOldFormat(text) {
             const blocks = text.split('{{Song covers').filter(block => block.trim());
             const entries = [];
             
@@ -428,33 +428,48 @@
                     // Check if it's a multi-singer entry
                     const hasMultipleSingers = singer.includes(' x ');
                     
-                    // Only process <br> and parentheses if not a special template
+                    // Check for special cases with pipe inside the singer bracket
+                    const hasPipeInBracket = /\[\[.*\|.*\]\]/.test(singer);
+                    
+                    // Only process <br> if not a special template
                     if (!isTemplate) {
-                        // Handle <br> content
+                        // Handle <br> content without affecting complex bracket structures
                         if (singer.includes('<br>')) {
-                            const [baseSinger, brContent] = singer.split('<br>');
-                            singer = baseSinger.trim();
-                            description = brContent.trim();
+                            // Handle <br> separately, preserving the entire singer string when it has complex brackets
+                            const brParts = singer.split('<br>');
+                            singer = brParts[0].trim();
+                            description = brParts.slice(1).join('<br>').trim();
                         }
                         
-                        // Handle parenthetical content
-                        if (singer.includes('(')) {
-                            const [baseSinger, parentContent] = singer.split('(');
-                            singer = baseSinger.trim();
-                            description = (description + ' ' + parentContent.replace(')', '')).trim();
-                        }
-                        
-                        // Store original format before potentially removing brackets
-                        const originalSinger = singer;
-                        
-                        // Remove brackets only if not a multi-singer entry
-                        if (!hasMultipleSingers) {
+                        // Handle parenthetical content when not inside brackets
+                        // Edge case: "[[Funi (Imouto)]]" should be kept as is
+                        if (!hasPipeInBracket && !hasMultipleSingers) {
+                            // If we have brackets with parentheses inside, keep it intact
+                            if (/\[\[.*\(.*\).*\]\]/.test(singer)) {
+                                // Just remove the outer brackets, keep the content as is
+                                singer = singer.replace(/^\[\[|\]\]$/g, '');
+                            } 
+                            // Regular case with parentheses outside brackets or no brackets
+                            else if (singer.includes('(') && singer.includes(')')) {
+                                const openParenIndex = singer.indexOf('(');
+                                const closeParenIndex = singer.lastIndexOf(')');
+                                
+                                if (openParenIndex > 0 && closeParenIndex > openParenIndex) {
+                                    const baseSinger = singer.substring(0, openParenIndex).trim();
+                                    const parentContent = singer.substring(openParenIndex + 1, closeParenIndex).trim();
+                                    
+                                    singer = baseSinger;
+                                    description = (description + ' ' + parentContent).trim();
+                                }
+                            }
+                        } else if (!hasMultipleSingers && !hasPipeInBracket) {
+                            // For simple cases with no special structures, just remove brackets
                             singer = singer.replace(/\[\[|\]\]/g, '');
                         }
                     }
                     
-                    // Add customlink if it's a multi-singer entry or template
-                    if (hasMultipleSingers || isTemplate) {
+                    // Add customlink if it's a multi-singer entry or template or has pipe in bracket
+                    if (hasMultipleSingers || isTemplate || hasPipeInBracket) {
                         entry.customlink = 'true';
                     }
                     
@@ -478,12 +493,12 @@
                         const cdPrefix = cdParts[0].trim();
                         const albumName = cdParts.length > 1 ? cdParts[1].trim() : '';
                         
-                        // Store the original singer name for later use
-                        const originalSinger = singer.replace(/\[\[|\]\]/g, '');
+                        // Get the original singer name (without brackets for normal cases)
+                        let originalSinger = hasMultipleSingers || hasPipeInBracket ? 
+                            singer : singer.replace(/\[\[|\]\]/g, '');
                         
                         // If there's an album name, always store the original singer name as alias
                         if (albumName) {
-                            // Remove brackets from alias
                             entry.alias = originalSinger;
                             
                             // If there's content before the # (album type), remove customlink
