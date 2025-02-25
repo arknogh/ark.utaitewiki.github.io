@@ -4,67 +4,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Template Converter</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        textarea {
-            width: 100%;
-            height: 300px;
-            margin: 10px 0;
-            padding: 10px;
-            font-family: monospace;
-            font-size: 14px;
-        }
-        button {
-            background-color: #4CAF50;
-            border: none;
-            color: white;
-            padding: 15px 32px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            margin: 4px 2px;
-            cursor: pointer;
-            border-radius: 4px;
-        }
-        .container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        .column {
-            display: flex;
-            flex-direction: column;
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        label {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h1>Template Converter</h1>
-    <div class="container">
-        <div class="column">
-            <label for="input">Old Format:</label>
-            <textarea id="input" placeholder="Paste old format here..."></textarea>
+<body class="bg-gray-50 min-h-screen font-sans">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-center text-gray-800">Template Converter</h1>
+            <p class="text-center text-gray-600 mt-2">Convert old format templates to the new format</p>
+        </header>
+        
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+            <div class="p-4 bg-blue-50 border-b border-blue-100">
+                <h2 class="text-lg font-medium text-blue-800">How to use</h2>
+            </div>
+            <div class="p-4 text-gray-700">
+                <ol class="list-decimal pl-5 space-y-2">
+                    <li>Paste your old format template in the left box</li>
+                    <li>Click "Convert Template" to generate the new format</li>
+                    <li>Copy the result from the right box</li>
+                </ol>
+            </div>
         </div>
-        <div class="column">
-            <label for="output">New Format:</label>
-            <textarea id="output" readonly placeholder="Converted template will appear here..."></textarea>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <label for="input" class="block text-sm font-medium text-gray-700 mb-2">Old Format:</label>
+                <textarea id="input" placeholder="Paste old format here..." class="w-full h-80 p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-mono"></textarea>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between mb-2">
+                    <label for="output" class="block text-sm font-medium text-gray-700">New Format:</label>
+                    <button onclick="copyOutput()" class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded transition-colors" id="copyBtn">
+                        Copy
+                    </button>
+                </div>
+                <textarea id="output" readonly placeholder="Converted template will appear here..." class="w-full h-80 p-3 border border-gray-300 rounded-md bg-gray-50 text-sm font-mono"></textarea>
+            </div>
         </div>
-    </div>
-    <div style="text-align: center;">
-        <button onclick="convert()">Convert</button>
+        
+        <div class="mt-6 flex justify-center">
+            <button onclick="convert()" id="convertBtn" class="px-6 py-3 bg-blue-600 text-white font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                Convert Template
+            </button>
+        </div>
+        
+        <div id="errorMessage" class="mt-4 bg-red-50 text-red-700 p-3 rounded-md hidden"></div>
+        
+        <footer class="mt-12 text-center text-gray-500 text-sm">
+            <p>Template conversion tool for song cover entries</p>
+        </footer>
     </div>
 
     <script>
@@ -73,9 +62,9 @@
                 case 'sc':
                     return `[https://w.soundcloud.com/player/?url=https://api.soundcloud.com/tracks/${id} Soundcloud]`;
                 case 'bb':
-                    return `[https://www.bilibili.com/video/${id}/ Bilibili]`;
+                    // BB now handled separately as a parameter
                 case 'koe':
-                    return `[http://koebu.com/koe/${id} koebu]`;
+                    return `{{Koebu|${id}}}`;
                 case 'tm':
                     return `[http://tmbox.net/pl/${id} TmBox]`;
                 case 'box':
@@ -127,17 +116,17 @@
                         singer = singer + '#' + albumName.trim();
                     }
                     
-                    // Add platform links to description
+                    // Add platform links to description (except BB)
                     const links = [];
                     if (scMatch && scMatch[1].trim()) {
                         links.push(formatExternalLink('sc', scMatch[1].trim()));
                     }
+                    // Handle BB separately now
                     if (bbMatch && bbMatch[1].trim()) {
-                        links.push(formatExternalLink('bb', bbMatch[1].trim()));
+                        entry.BB = bbMatch[1].trim();
                     }
                     if (koebuMatch && koebuMatch[1].trim()) {
-                        //links.push(formatExternalLink('koe', koebuMatch[1].trim()));
-                        links.push(`{{Koebu|${koebuMatch[1].trim()}}}`);
+                        links.push(formatExternalLink('koe', koebuMatch[1].trim()));
                     }
                     if (tmMatch && tmMatch[1].trim()) {
                         links.push(formatExternalLink('tm', tmMatch[1].trim()));
@@ -153,7 +142,8 @@
                     // Check if it's a multi-singer entry
                     const hasMultipleSingers = singer.includes(' x ');
                     if (hasMultipleSingers) {
-                        entry.singernolink = 'y';
+                        // Use customlink=true instead of singernolink=y
+                        entry.customlink = 'true';
                     }
                     
                     // Remove [[ ]] if not multi-singer
@@ -199,13 +189,70 @@
         function convert() {
             const input = document.getElementById('input');
             const output = document.getElementById('output');
+            const errorMessage = document.getElementById('errorMessage');
+            const convertBtn = document.getElementById('convertBtn');
             
-            try {
-                const entries = parseOldFormat(input.value);
-                output.value = formatNewTemplate(entries);
-            } catch (error) {
-                output.value = 'Error: ' + error.message;
-            }
+            // Hide any previous error
+            errorMessage.classList.add('hidden');
+            
+            // Disable button and show loading state
+            convertBtn.disabled = true;
+            convertBtn.innerText = 'Converting...';
+            convertBtn.classList.add('bg-blue-400');
+            convertBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            
+            setTimeout(() => {
+                try {
+                    if (!input.value.trim()) {
+                        throw new Error('Please paste old format template first');
+                    }
+                    
+                    const entries = parseOldFormat(input.value);
+                    
+                    if (entries.length === 0) {
+                        throw new Error('No valid entries found in the input');
+                    }
+                    
+                    output.value = formatNewTemplate(entries);
+                    
+                    // Flash success indicator
+                    output.classList.add('bg-green-50', 'border-green-200');
+                    setTimeout(() => {
+                        output.classList.remove('bg-green-50', 'border-green-200');
+                    }, 1000);
+                    
+                } catch (error) {
+                    output.value = '';
+                    errorMessage.textContent = 'Error: ' + error.message;
+                    errorMessage.classList.remove('hidden');
+                } finally {
+                    // Restore button state
+                    convertBtn.disabled = false;
+                    convertBtn.innerText = 'Convert Template';
+                    convertBtn.classList.remove('bg-blue-400');
+                    convertBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                }
+            }, 300); // Small delay to show loading state
+        }
+        
+        function copyOutput() {
+            const output = document.getElementById('output');
+            const copyBtn = document.getElementById('copyBtn');
+            
+            if (!output.value) return;
+            
+            output.select();
+            document.execCommand('copy');
+            
+            // Change button text temporarily
+            const originalText = copyBtn.innerText;
+            copyBtn.innerText = 'Copied!';
+            copyBtn.classList.add('bg-green-100', 'text-green-700');
+            
+            setTimeout(() => {
+                copyBtn.innerText = originalText;
+                copyBtn.classList.remove('bg-green-100', 'text-green-700');
+            }, 1500);
         }
     </script>
 </body>
