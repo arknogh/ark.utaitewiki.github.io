@@ -29,6 +29,21 @@
       ]
     },
     {
+      "id": "cspf",
+      "title": "Song to Utattemita Template Converter",
+      "shortTitle": "Song Template Converter",
+      "description": "Converts old <a href=\"https://utaite.fandom.com/wiki/Template:Song\" target=\"_blank\">Song</a> template format to new <a href=\"https://utaite.fandom.com/wiki/Template:Utattemita\" target=\"_blank\">Utattemita</a> format with TabberType2 structure.",
+      "status": "active",
+      "backgroundColor": "bg-indigo-600",
+      "url": "./cspf.html",
+      "bullets": [
+        "One-click template conversion",
+        "Preserves all original fields",
+        "Maintains MediaWiki case sensitivity",
+        "Clean Tailwind CSS interface"
+      ]
+    },
+    {
       "id": "json2fuce",
       "title": "JSON to FUCE Converter",
       "shortTitle": "JSON to FUCE Converter",
