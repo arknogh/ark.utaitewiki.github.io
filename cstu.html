@@ -51,6 +51,15 @@
         
         <div id="errorMessage" class="mt-4 bg-red-50 text-red-700 p-3 rounded-md hidden"></div>
         
+        <div class="mt-8 bg-yellow-50 border border-yellow-100 rounded-lg p-4 text-yellow-800 text-sm">
+            <h3 class="font-medium">CD Field Handling:</h3>
+            <ul class="list-disc pl-5 mt-2 space-y-1">
+                <li>If content exists before # in CD field (e.g., <code>EXIT TUNES Albums#Ikemen Voice Paradise 7</code>), that value replaces the singer</li>
+                <li>If no content before # (e.g., <code>#Hakozume Clover</code>), original singer value is kept</li>
+                <li>Album name (after #) is always appended to the singer value</li>
+            </ul>
+        </div>
+        
         <footer class="mt-12 text-center text-gray-500 text-sm">
             <p>Template conversion tool for song cover entries</p>
         </footer>
@@ -111,9 +120,21 @@
                     const koebuMatch = block.match(new RegExp(`koe${i} = ([^\\n|]+)`));
                     const boxMatch = block.match(new RegExp(`box${i} = ([^\\n|]+)`));
                     
+                    // Updated CD handling
                     if (cdMatch) {
-                        const [_, albumName] = cdMatch[1].split('#');
-                        singer = singer + '#' + albumName.trim();
+                        const cdParts = cdMatch[1].split('#');
+                        const cdPrefix = cdParts[0].trim();
+                        const albumName = cdParts.length > 1 ? cdParts[1].trim() : '';
+                        
+                        // If there's content before the #, use that instead of singer
+                        if (cdPrefix) {
+                            singer = cdPrefix;
+                        }
+                        
+                        // Append album name if it exists
+                        if (albumName) {
+                            singer = singer + '#' + albumName;
+                        }
                     }
                     
                     // Add platform links to description (except BB)
