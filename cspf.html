@@ -5,48 +5,235 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Song Template Converter</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              200: '#c7d2fe',
+              300: '#a5b4fc',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              800: '#3730a3',
+              900: '#312e81',
+              950: '#1e1b4b',
+            },
+          },
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    /* Custom scrollbar styles */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    .dark ::-webkit-scrollbar-track {
+      background: #1f2937;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    
+    .dark ::-webkit-scrollbar-thumb {
+      background: #4b5563;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+    
+    .dark ::-webkit-scrollbar-thumb:hover {
+      background: #6b7280;
+    }
+    
+    /* Toast notification */
+    @keyframes slideIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    @keyframes slideOut {
+      from { transform: translateY(0); opacity: 1; }
+      to { transform: translateY(20px); opacity: 0; }
+    }
+    
+    .toast-enter {
+      animation: slideIn 0.3s ease forwards;
+    }
+    
+    .toast-exit {
+      animation: slideOut 0.3s ease forwards;
+    }
+  </style>
 </head>
-<body class="bg-gray-100 min-h-screen p-4 md:p-8">
-  <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
-    <div class="px-6 py-4 bg-indigo-600">
-      <h1 class="text-2xl font-bold text-white">Song Template Converter</h1>
-      <p class="text-indigo-100">Convert old Song templates to the new Utattemita format</p>
-    </div>
-    
-    <div class="p-6">
-      <div class="mb-6">
-        <label for="oldTemplate" class="block text-sm font-medium text-gray-700 mb-1">Old Template Format</label>
-        <textarea id="oldTemplate" rows="10" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm" placeholder="Paste the old Song template here..."></textarea>
-      </div>
-      
-      <div class="flex justify-center mb-6">
-        <button id="convertButton" class="px-4 py-2 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-          Convert Template
-        </button>
-      </div>
-      
-      <div class="mb-4">
-        <label for="newTemplate" class="block text-sm font-medium text-gray-700 mb-1">New Template Format</label>
-        <textarea id="newTemplate" rows="20" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm" readonly></textarea>
-      </div>
-      
-      <div class="flex justify-end">
-        <button id="copyButton" class="px-4 py-2 bg-gray-600 text-white font-medium rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">
-          Copy to Clipboard
-        </button>
-      </div>
-    </div>
-    
-    <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
-      <h2 class="text-lg font-medium text-gray-900 mb-2">Instructions</h2>
-      <ol class="list-decimal list-inside text-gray-700 space-y-1 text-sm">
-        <li>Paste your old Song template format in the top box</li>
-        <li>Click "Convert Template" to transform it</li>
-        <li>The new Utattemita format will appear in the bottom box</li>
-        <li>Click "Copy to Clipboard" to copy the result</li>
-      </ol>
-    </div>
+<body class="font-['Inter',sans-serif] bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-200 transition-colors duration-300 min-h-screen">
+  <div id="toast" class="fixed bottom-5 right-5 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 hidden flex items-center">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+    </svg>
+    <span id="toastMessage">Copied to clipboard!</span>
   </div>
+
+  <header class="bg-white dark:bg-slate-800 shadow-md py-4 px-6 mb-6">
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+        </svg>
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Song Template Converter</h1>
+          <p class="text-sm text-slate-600 dark:text-slate-400">Convert old Song templates to the new Utattemita format</p>
+        </div>
+      </div>
+      <button id="themeToggle" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" aria-label="Toggle dark mode">
+        <!-- Sun icon for dark mode -->
+        <svg id="sunIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-amber-500 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+        <!-- Moon icon for light mode -->
+        <svg id="moonIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-700 block dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 pb-16">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Input Section -->
+      <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md overflow-hidden transition-all">
+        <div class="px-6 py-4 bg-gradient-to-r from-primary-600 to-primary-700 dark:from-primary-800 dark:to-primary-900">
+          <h2 class="text-xl font-semibold text-white flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Old Template Format
+          </h2>
+        </div>
+        
+        <div class="p-6">
+          <textarea id="oldTemplate" rows="10" class="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent font-mono text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 transition-colors resize-none" placeholder="Paste the old Song template here..."></textarea>
+          
+          <div class="flex justify-center mt-6">
+            <button id="convertButton" class="group relative px-6 py-3 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white font-medium rounded-lg shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-primary-400 transition-all duration-200 flex items-center space-x-2 overflow-hidden">
+              <span class="relative z-10">Convert Template</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 relative z-10 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+              <div class="absolute inset-0 h-full w-0 bg-primary-800 dark:bg-primary-500 transition-all duration-300 group-hover:w-full"></div>
+            </button>
+          </div>
+        </div>
+        
+        <div class="bg-slate-50 dark:bg-slate-900 px-6 py-4 border-t border-slate-200 dark:border-slate-700">
+          <h3 class="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Instructions
+          </h3>
+          <ol class="list-decimal list-inside text-slate-700 dark:text-slate-400 space-y-2 text-sm ml-3">
+            <li>Paste your old Song template format</li>
+            <li>Click "Convert Template" to transform it</li>
+            <li>The new Utattemita format will appear</li>
+            <li>Click "Copy to Clipboard" to copy the result</li>
+          </ol>
+        </div>
+      </div>
+      
+      <!-- Output Section -->
+      <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md overflow-hidden transition-all">
+        <div class="px-6 py-4 bg-gradient-to-r from-emerald-600 to-emerald-700 dark:from-emerald-800 dark:to-emerald-900">
+          <h2 class="text-xl font-semibold text-white flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            New Template Format
+          </h2>
+        </div>
+        
+        <div class="p-6">
+          <div class="relative">
+            <textarea id="newTemplate" rows="16" class="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg shadow-sm font-mono text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 transition-colors resize-none" readonly></textarea>
+            <div id="emptyStateOverlay" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 bg-white/60 dark:bg-slate-700/60 backdrop-blur-sm rounded-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <p class="text-lg font-medium">Your converted template will appear here</p>
+              <p class="text-sm">Convert a template first to see the result</p>
+            </div>
+          </div>
+          
+          <div class="flex justify-end mt-6">
+            <button id="copyButton" class="group relative px-6 py-3 bg-slate-600 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-medium rounded-lg shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+              </svg>
+              <span>Copy to Clipboard</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Example Section -->
+    <div class="mt-8 bg-white dark:bg-slate-800 rounded-xl shadow-md overflow-hidden transition-all">
+      <div class="px-6 py-4 bg-gradient-to-r from-amber-500 to-amber-600 dark:from-amber-700 dark:to-amber-800">
+        <h2 class="text-xl font-semibold text-white flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          Example Template
+        </h2>
+      </div>
+      
+      <div class="p-6">
+        <div class="bg-slate-100 dark:bg-slate-700 p-4 rounded-lg font-mono text-sm overflow-x-auto">
+          <pre class="text-slate-800 dark:text-slate-200">{{Song
+|image = CHIKYUU.png
+|songtitle =  Chikyuu Saigo no Kokuhaku wo&lt;br&gt;(地球最後の告白を)&lt;br&gt;(The Earth's Last Confession)
+|nnd = sm18198019|yt =|bb=
+|main = -{{VW|GUMI}}-
+|producer = Music & Lyrics: {{VW|kemu}}&lt;br&gt;Illustration: [[Avatar Illustrators#H|hatsuko]]&lt;br&gt;Movie: [http://www.nicovideo.jp/mylist/14639164 ke-sanβ]&lt;br&gt;SMC: [http://www.nicovideo.jp/mylist/20737161 Suzumu]
+}}</pre>
+        </div>
+        
+        <button id="useExampleButton" class="mt-4 px-4 py-2 bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-500 text-white font-medium rounded-lg shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all duration-200 text-sm flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          Use This Example
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bg-white dark:bg-slate-800 py-4 border-t border-slate-200 dark:border-slate-700 mt-auto">
+    <div class="max-w-6xl mx-auto px-4 text-center text-sm text-slate-600 dark:text-slate-400">
+      <p>Song Template Converter for MediaWiki Utattemita format</p>
+    </div>
+  </footer>
 
   <script>
     /**
@@ -173,7 +360,11 @@ Song Information=
       const newTemplateTextarea = document.getElementById('newTemplate');
       const convertButton = document.getElementById('convertButton');
       const copyButton = document.getElementById('copyButton');
-
+      const useExampleButton = document.getElementById('useExampleButton');
+      const emptyStateOverlay = document.getElementById('emptyStateOverlay');
+      const themeToggle = document.getElementById('themeToggle');
+      const toast = document.getElementById('toast');
+      
       // Example template for easy testing
       const exampleTemplate = `{{Song
 |image = CHIKYUU.png
@@ -182,25 +373,113 @@ Song Information=
 |main = -{{VW|GUMI}}-
 |producer = Music & Lyrics: {{VW|kemu}}<br>Illustration: [[Avatar Illustrators#H|hatsuko]]<br>Movie: [http://www.nicovideo.jp/mylist/14639164 ke-sanβ]<br>SMC: [http://www.nicovideo.jp/mylist/20737161 Suzumu]
 }}`;
-
-      // Pre-fill with example for testing (optional)
-      oldTemplateTextarea.value = exampleTemplate;
       
-      // Convert button functionality
+      // Load theme preference from localStorage
+      function loadThemePreference() {
+        if (localStorage.getItem('theme') === 'dark' || 
+          (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      }
+      
+      // Set theme preference
+      function setThemePreference(isDark) {
+        if (isDark) {
+          document.documentElement.classList.add('dark');
+          localStorage.setItem('theme', 'dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+          localStorage.setItem('theme', 'light');
+        }
+      }
+      
+      // Load theme on initial page load
+      loadThemePreference();
+      
+      // Handle theme toggle
+      themeToggle.addEventListener('click', function() {
+        const isDarkMode = document.documentElement.classList.contains('dark');
+        setThemePreference(!isDarkMode);
+      });
+      
+      // Show toast notification
+      function showToast(message, duration = 2000) {
+        const toastMessage = document.getElementById('toastMessage');
+        toastMessage.textContent = message;
+        
+        toast.classList.remove('toast-exit');
+        toast.classList.add('toast-enter');
+        toast.classList.remove('hidden');
+        
+        setTimeout(() => {
+          toast.classList.remove('toast-enter');
+          toast.classList.add('toast-exit');
+          setTimeout(() => {
+            toast.classList.add('hidden');
+          }, 300);
+        }, duration);
+      }
+      
+      // Enable or disable copy button based on output content
+      function updateCopyButtonState() {
+        if (newTemplateTextarea.value.trim() === '') {
+          copyButton.disabled = true;
+          emptyStateOverlay.classList.remove('hidden');
+        } else {
+          copyButton.disabled = false;
+          emptyStateOverlay.classList.add('hidden');
+        }
+      }
+      
+      // Use example button functionality
+      useExampleButton.addEventListener('click', function() {
+        oldTemplateTextarea.value = exampleTemplate;
+        oldTemplateTextarea.focus();
+      });
+      
+      // Convert button functionality with loading animation
       convertButton.addEventListener('click', function() {
         const oldTemplate = oldTemplateTextarea.value;
         if (oldTemplate.trim() === '') {
-          alert('Please enter an old template format first.');
+          showToast('Please enter an old template format first.', 3000);
+          oldTemplateTextarea.focus();
           return;
         }
         
-        try {
-          const newTemplate = convertSongTemplate(oldTemplate);
-          newTemplateTextarea.value = newTemplate;
-        } catch (error) {
-          console.error('Conversion error:', error);
-          alert('Error during conversion. Please check the console for details.');
-        }
+        // Add loading state
+        convertButton.disabled = true;
+        convertButton.innerHTML = `
+          <svg class="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span>Converting...</span>
+        `;
+        
+        // Simulate a brief delay for better UX
+        setTimeout(() => {
+          try {
+            const newTemplate = convertSongTemplate(oldTemplate);
+            newTemplateTextarea.value = newTemplate;
+            updateCopyButtonState();
+            showToast('Template successfully converted!', 2000);
+          } catch (error) {
+            console.error('Conversion error:', error);
+            showToast('Error during conversion. Please check your template format.', 4000);
+          } finally {
+            // Reset button state
+            convertButton.disabled = false;
+            convertButton.innerHTML = `
+              <span class="relative z-10">Convert Template</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 relative z-10 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+              <div class="absolute inset-0 h-full w-0 bg-primary-800 dark:bg-primary-500 transition-all duration-300 group-hover:w-full"></div>
+            `;
+          }
+        }, 600);
       });
       
       // Copy button functionality
@@ -209,15 +488,31 @@ Song Information=
         
         try {
           document.execCommand('copy');
-          const originalText = copyButton.textContent;
-          copyButton.textContent = 'Copied!';
-          
-          setTimeout(function() {
-            copyButton.textContent = originalText;
-          }, 2000);
+          showToast('Template copied to clipboard!', 2000);
         } catch (error) {
           console.error('Copy error:', error);
-          alert('Failed to copy to clipboard. Please select and copy manually.');
+          // Try the newer clipboard API if the older method failed
+          if (navigator.clipboard) {
+            navigator.clipboard.writeText(newTemplateTextarea.value)
+              .then(() => {
+                showToast('Template copied to clipboard!', 2000);
+              })
+              .catch(err => {
+                showToast('Failed to copy. Please select and copy manually.', 3000);
+              });
+          } else {
+            showToast('Failed to copy. Please select and copy manually.', 3000);
+          }
+        }
+      });
+      
+      // Initialize UI state
+      updateCopyButtonState();
+      
+      // Add keyboard shortcut (Ctrl+Enter or Cmd+Enter to convert)
+      oldTemplateTextarea.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !convertButton.disabled) {
+          convertButton.click();
         }
       });
     });
