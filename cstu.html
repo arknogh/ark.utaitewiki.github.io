@@ -418,7 +418,7 @@
                     let singer = singerMatch[1].trim();
                     let description = '';
                     
-                    // Check if it's a multi-singer entry (before removing brackets)
+                    // Check if it's a multi-singer entry (WITH the brackets)
                     const hasMultipleSingers = singer.includes(' x ');
                     
                     // Handle <br> content
@@ -435,8 +435,11 @@
                         description = (description + ' ' + parentContent.replace(')', '')).trim();
                     }
                     
-                    // Store clean original singer value before CD modifications (removing brackets)
-                    let originalSinger = singer.replace(/\[\[|\]\]/g, '');
+                    // Store the original singer value WITH brackets
+                    let originalSingerWithBrackets = singer;
+                    
+                    // Store clean original singer value (removing brackets) only for CD processing
+                    let originalSingerNoBrackets = singer.replace(/\[\[|\]\]/g, '');
                     
                     // Handle CD and various platform links
                     const cdMatch = block.match(new RegExp(`cd${i} = ([^\\n|]+)`));
@@ -446,26 +449,25 @@
                     const koebuMatch = block.match(new RegExp(`koe${i} = ([^\\n|]+)`));
                     const boxMatch = block.match(new RegExp(`box${i} = ([^\\n|]+)`));
                     
-                    // First, remove brackets from singer
-                    singer = originalSinger;
-                    
                     // Updated CD handling
                     if (cdMatch) {
                         const cdParts = cdMatch[1].split('#');
                         const cdPrefix = cdParts[0].trim();
                         const albumName = cdParts.length > 1 ? cdParts[1].trim() : '';
                         
-                        // Always store original singer as alias if there's an album
-                        if (albumName) {
-                            entry.alias = singer;
-                        }
-                        
                         // If there's content before the #, use that instead of singer
                         if (cdPrefix) {
+                            // Always store original singer as alias if there's content before #
+                            entry.alias = originalSingerNoBrackets;
                             singer = cdPrefix;
                             
-                            // Only add customlink if multi-singer and NO prefix in CD
-                            // (because otherwise the singer field no longer contains multiple singers)
+                            // Now singer is no longer in original format, so no customlink needed
+                            // regardless of whether it was a multi-singer entry originally
+                        } else {
+                            // No prefix, keep original singer format WITH brackets
+                            singer = originalSingerWithBrackets;
+                            
+                            // Only add customlink if it's multi-singer
                             if (hasMultipleSingers) {
                                 entry.customlink = 'true';
                             }
@@ -476,7 +478,10 @@
                             singer = singer + '#' + albumName;
                         }
                     } else {
-                        // Only add customlink if multi-singer and original format is kept
+                        // No CD field, keep original singer format WITH brackets
+                        singer = originalSingerWithBrackets;
+                        
+                        // Only add customlink if it's multi-singer
                         if (hasMultipleSingers) {
                             entry.customlink = 'true';
                         }
