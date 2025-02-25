@@ -432,8 +432,8 @@
                         description = (description + ' ' + parentContent.replace(')', '')).trim();
                     }
                     
-                    // Store original singer value before CD modifications
-                    let originalSinger = singer;
+                    // Store clean original singer value before CD modifications (removing brackets)
+                    let originalSinger = singer.replace(/\[\[|\]\]/g, '');
                     
                     // Handle CD and various platform links
                     const cdMatch = block.match(new RegExp(`cd${i} = ([^\\n|]+)`));
@@ -449,10 +449,13 @@
                         const cdPrefix = cdParts[0].trim();
                         const albumName = cdParts.length > 1 ? cdParts[1].trim() : '';
                         
-                        // If there's content before the #, use that instead of singer and save original as alias
+                        // Always store original singer as alias if there's an album
+                        if (albumName) {
+                            entry.alias = originalSinger;
+                        }
+                        
+                        // If there's content before the #, use that instead of singer
                         if (cdPrefix) {
-                            // Store original singer as alias (before removing brackets)
-                            entry.alias = originalSinger.replace(/\[\[|\]\]/g, '');
                             singer = cdPrefix;
                         }
                         
@@ -492,8 +495,8 @@
                         entry.customlink = 'true';
                     }
                     
-                    // Remove [[ ]] if not multi-singer and not already handled as alias
-                    if (!hasMultipleSingers && !entry.alias) {
+                    // If we haven't already stored original singer as alias, remove [[ ]] from singer
+                    if (!('alias' in entry)) {
                         singer = singer.replace(/\[\[|\]\]/g, '');
                     }
                     
