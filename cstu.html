@@ -443,6 +443,9 @@
                     const koebuMatch = block.match(new RegExp(`koe${i} = ([^\\n|]+)`));
                     const boxMatch = block.match(new RegExp(`box${i} = ([^\\n|]+)`));
                     
+                    // First, remove brackets from singer
+                    singer = singer.replace(/\[\[|\]\]/g, '');
+                    
                     // Updated CD handling
                     if (cdMatch) {
                         const cdParts = cdMatch[1].split('#');
@@ -451,7 +454,7 @@
                         
                         // Always store original singer as alias if there's an album
                         if (albumName) {
-                            entry.alias = originalSinger;
+                            entry.alias = singer;
                         }
                         
                         // If there's content before the #, use that instead of singer
@@ -489,15 +492,10 @@
                     }
                     
                     // Check if it's a multi-singer entry
-                    const hasMultipleSingers = singer.includes(' x ');
+                    const hasMultipleSingers = originalSinger.includes(' x ');
                     if (hasMultipleSingers) {
                         // Use customlink=true instead of singernolink=y
                         entry.customlink = 'true';
-                    }
-                    
-                    // If we haven't already stored original singer as alias, remove [[ ]] from singer
-                    if (!('alias' in entry)) {
-                        singer = singer.replace(/\[\[|\]\]/g, '');
                     }
                     
                     entry.singer = singer;
@@ -521,7 +519,7 @@
             
             return entries;
         }
-
+        
         function formatNewTemplate(entries) {
             let output = '{{NOUT\n|entries=';
             entries.forEach(entry => {
