@@ -432,6 +432,9 @@
                         description = (description + ' ' + parentContent.replace(')', '')).trim();
                     }
                     
+                    // Store original singer value before CD modifications
+                    let originalSinger = singer;
+                    
                     // Handle CD and various platform links
                     const cdMatch = block.match(new RegExp(`cd${i} = ([^\\n|]+)`));
                     const tmMatch = block.match(new RegExp(`tm${i} = ([^\\n|]+)`));
@@ -446,8 +449,10 @@
                         const cdPrefix = cdParts[0].trim();
                         const albumName = cdParts.length > 1 ? cdParts[1].trim() : '';
                         
-                        // If there's content before the #, use that instead of singer
+                        // If there's content before the #, use that instead of singer and save original as alias
                         if (cdPrefix) {
+                            // Store original singer as alias (before removing brackets)
+                            entry.alias = originalSinger.replace(/\[\[|\]\]/g, '');
                             singer = cdPrefix;
                         }
                         
@@ -487,8 +492,8 @@
                         entry.customlink = 'true';
                     }
                     
-                    // Remove [[ ]] if not multi-singer
-                    if (!hasMultipleSingers) {
+                    // Remove [[ ]] if not multi-singer and not already handled as alias
+                    if (!hasMultipleSingers && !entry.alias) {
                         singer = singer.replace(/\[\[|\]\]/g, '');
                     }
                     
